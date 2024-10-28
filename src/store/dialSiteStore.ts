@@ -44,6 +44,7 @@ export interface DialSiteStore {
   setLoadingStage: (loadingStage: string) => void
   loginWithEmail: (email: string, hash: string) => Promise<boolean>
   registerEmail: (email: string, hash: string) => Promise<boolean>
+  verifyEmail: (email: string, hash: string, code: string) => Promise<boolean>
 }
 
 const useDialSiteStore = create<DialSiteStore>()(
@@ -95,6 +96,28 @@ const useDialSiteStore = create<DialSiteStore>()(
         }
         return true
       },
+      verifyEmail: async (email: string, hash: string, code: string) => {
+        const { setAlerts, setToken } = get()
+        const result = await middleware(axios.post(`/api/email/verify-account`, {
+          email,
+          password: hash,
+          verificationcode: code
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'client_id': 2,
+          },
+        }))
+        console.log({ verifyEmailResult: result })
+        if (result.error) {
+          setAlerts([{ id: Math.round(Math.random() * 1000000000), class: 'alert', start_time: Math.floor(Date.now() / 1000), content: result.message, dismissed: false }])
+          return false
+        }
+        if (result.data?.token) {
+          setToken(result.data.token)
+        }
+        return true
+      },
       loginWithEmail: async (email: string, password: string) => {
         const { setAlerts } = get()
         const result = await middleware(axios.post(`/api/email/login`, {
@@ -118,7 +141,7 @@ const useDialSiteStore = create<DialSiteStore>()(
       getUserInfo: async () => {
         const { token, setServerIsUnderMaintenance, setExpectedAvailabilityDate, addClientAlert, onSignOut, } = get()
         if (!token) return
-        const result = await middleware(axios.get(`/api/get-user-info-x`, {
+        const result = await middleware(axios.get(`/api/user/get-user-info`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
