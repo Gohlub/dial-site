@@ -1,10 +1,10 @@
-import useValetStore from '../store/valetStore'
+import useDialSiteStore from '../store/dialSiteStore'
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 
 const NotWhitelisted = () => {
-  const { submitContactRequest } = useValetStore()
+  const { submitContactRequest } = useDialSiteStore()
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')

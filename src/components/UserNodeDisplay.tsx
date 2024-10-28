@@ -1,11 +1,11 @@
 import { UserNode } from "../types/UserNode"
-import useValetStore from "../store/valetStore"
+import useDialSiteStore from "../store/dialSiteStore"
 import classNames from "classnames"
 import { useEffect } from "react"
 import { FaGear } from "react-icons/fa6"
 
 export const UserNodeDisplay: React.FC<{ node: UserNode }> = ({ node }) => {
-  const { userNodes, activeNode, setActiveNode } = useValetStore()
+  const { userNodes, activeNode, setActiveNode } = useDialSiteStore()
   useEffect(() => {
     if (activeNode && !userNodes.find(n => n.id === activeNode?.id)) {
       setActiveNode(null)

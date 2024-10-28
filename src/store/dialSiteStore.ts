@@ -7,7 +7,7 @@ import { middleware } from '../utilities/middleware'
 import { ServerAlert } from '../types/ServerAlert'
 import { ClientAlert } from '../types/ClientAlert'
 
-export interface ValetStore {
+export interface DialSiteStore {
   token: string
   setToken: (token: string) => void
   getUserInfo: () => Promise<void>
@@ -36,13 +36,17 @@ export interface ValetStore {
   addClientAlert: (message: any, id?: number, _class?: string) => void
   getServerAlerts: () => Promise<void>
   onRegenerateSshPassword: (node: UserNode) => Promise<void>
-  get: () => ValetStore
-  set: (state: ValetStore) => void
+  get: () => DialSiteStore
+  set: (state: DialSiteStore) => void
   redirectToX: () => Promise<void>
   submitContactRequest: (name: string, email: string, msg: string) => Promise<{ success: boolean, error: boolean | string }>
+  loadingStage: string
+  setLoadingStage: (loadingStage: string) => void
+  loginWithEmail: (email: string, hash: string) => Promise<boolean>
+  registerEmail: (email: string, hash: string) => Promise<boolean>
 }
 
-const useValetStore = create<ValetStore>()(
+const useDialSiteStore = create<DialSiteStore>()(
   persist(
     (set, get) => ({
       set,
@@ -71,6 +75,46 @@ const useValetStore = create<ValetStore>()(
         window.location.href = data;
         setAlerts([])
       },
+      registerEmail: async (email: string, hash: string) => {
+        const { setAlerts } = get()
+        const result = await middleware(axios.post(`/api/email/register`, {
+          email,
+          password: hash
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'client_id': 2,
+          },
+        }))
+
+        console.log({ registerResult: result })
+
+        if (result.error) {
+          setAlerts([{ id: Math.round(Math.random() * 1000000000), class: 'alert', start_time: Math.floor(Date.now() / 1000), content: result.message, dismissed: false }])
+          return false
+        }
+        return true
+      },
+      loginWithEmail: async (email: string, password: string) => {
+        const { setAlerts } = get()
+        const result = await middleware(axios.post(`/api/email/login`, {
+          email,
+          password
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'client_id': 2,
+          },
+        }))
+        if (result.error) {
+          setAlerts([{ id: Math.round(Math.random() * 1000000000), class: 'alert', start_time: Math.floor(Date.now() / 1000), content: result.message, dismissed: false }])
+          return false
+        }
+        console.log({ loginResult: result })
+        return true
+      },
+      loadingStage: 'Getting User Info',
+      setLoadingStage: (loadingStage: string) => set({ loadingStage }),
       getUserInfo: async () => {
         const { token, setServerIsUnderMaintenance, setExpectedAvailabilityDate, addClientAlert, onSignOut, } = get()
         if (!token) return
@@ -326,10 +370,10 @@ const useValetStore = create<ValetStore>()(
       }
     }),
     {
-      name: 'valet', // unique name
+      name: 'dial-site', // unique name
       storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
     }
   )
 )
 
-export default useValetStore
+export default useDialSiteStore

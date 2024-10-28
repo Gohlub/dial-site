@@ -1,12 +1,12 @@
 import { useState } from "react"
-import useValetStore from "../store/valetStore"
+import useDialSiteStore from "../store/dialSiteStore"
 import { Modal } from "./Modal"
 import { sha256 } from "../utilities/hash"
 import { useIsMobile } from "../utilities/dimensions"
 import classNames from "classnames"
 
 export const ResetPasswordModal = () => {
-  const { activeNode, setResetPasswordModalOpen, resetNodePassword } = useValetStore()
+  const { activeNode, setResetPasswordModalOpen, resetNodePassword } = useDialSiteStore()
   const [newPassword, setNewPassword] = useState<string>('')
   const [newPasswordHash, setNewPasswordHash] = useState<string>('')
   const [confirmNewPasswordHash, setConfirmNewPasswordHash] = useState<string>('')

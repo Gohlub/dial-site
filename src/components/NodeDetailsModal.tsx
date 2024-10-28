@@ -4,16 +4,16 @@ import dayjs from "dayjs";
 import relativeTime from 'dayjs/plugin/relativeTime'
 import classNames from "classnames";
 import { useState } from "react";
-import useValetStore from "../store/valetStore";
+import useDialSiteStore from "../store/dialSiteStore";
 import { Modal } from "./Modal";
 import Chip from "./Chip";
 dayjs.extend(relativeTime)
 
 export const NodeDetailsModal: React.FC<{ node: UserNode }> = ({ node }) => {
-  const { setActiveNode, setResetPasswordModalOpen } = useValetStore()
+  const { setActiveNode, setResetPasswordModalOpen } = useDialSiteStore()
   const [showPassword, setShowPassword] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
-  const { onRegenerateSshPassword } = useValetStore()
+  const { onRegenerateSshPassword } = useDialSiteStore()
   const regenerateSshPassword = async () => {
     if (!window.confirm(`Are you sure you want to regenerate the SSH password for ${node.kinode_name}.os?`)) {
       return

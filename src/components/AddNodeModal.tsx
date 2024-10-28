@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import useValetStore from '../store/valetStore'
+import useDialSiteStore from '../store/dialSiteStore'
 import { Modal } from './Modal'
 import { sha256 } from '../utilities/hash'
 import { useIsMobile } from '../utilities/dimensions'
@@ -12,7 +12,7 @@ enum AddNodeStage {
 }
 
 export const AddNodeModal = () => {
-  const { setAddNodeModalOpen, checkIsNodeAvailable, bootNode, getUserNodes, userNodes, userInfo } = useValetStore()
+  const { setAddNodeModalOpen, checkIsNodeAvailable, bootNode, getUserNodes, userNodes, userInfo } = useDialSiteStore()
   const [nodeName, setNodeName] = useState('')
   const [stage, setStage] = useState(AddNodeStage.CheckAvailability)
   const [available, setAvailable] = useState<boolean | null>(null)

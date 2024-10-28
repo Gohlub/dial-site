@@ -1,12 +1,12 @@
 import { useNavigate, useLocation } from "react-router-dom"
-import useValetStore from "../store/valetStore"
+import useDialSiteStore from "../store/dialSiteStore"
 import { useEffect } from "react"
 import NavBar from "../components/NavBar"
 
 export const ProcessToken = () => {
   const location = useLocation()
   const nav = useNavigate()
-  const { setToken } = useValetStore()
+  const { setToken } = useDialSiteStore()
 
   const searchParams = new URLSearchParams(location.search)
   const token = searchParams.get('token')

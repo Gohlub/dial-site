@@ -1,10 +1,10 @@
 import classNames from "classnames"
-import useValetStore from "../store/valetStore"
+import useDialSiteStore from "../store/dialSiteStore"
 import dayjs from "dayjs"
 import { useIsMobile } from "../utilities/dimensions"
 
 export const Alerts: React.FC = () => {
-  const { alerts, setAlerts } = useValetStore()
+  const { alerts, setAlerts } = useDialSiteStore()
   const isMobile = useIsMobile()
   return <div className={classNames('fixed flex flex-col place-items-center max-h-48 overflow-y-auto', {
     'top-12 left-2 right-2': !isMobile,

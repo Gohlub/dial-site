@@ -1,11 +1,11 @@
 import { FaPlus } from "react-icons/fa6"
-import useValetStore from "../store/valetStore"
+import useDialSiteStore from "../store/dialSiteStore"
 import { UserNodeDisplay } from "./UserNodeDisplay"
 import classNames from "classnames"
 
 
 export const UserNodesList = () => {
-  const { userNodes, setAddNodeModalOpen } = useValetStore()
+  const { userNodes, setAddNodeModalOpen } = useDialSiteStore()
   return (
     <div
       className={classNames('flex flex-col grow place-items-center place-content-center')}

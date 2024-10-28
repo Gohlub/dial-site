@@ -1,4 +1,4 @@
-import useValetStore from "../store/valetStore";
+import useDialSiteStore from "../store/dialSiteStore";
 import { AddNodeModal } from "./AddNodeModal";
 import { NodeDetailsModal } from "./NodeDetailsModal";
 import { ResetPasswordModal } from "./ResetPasswordModal";
@@ -6,7 +6,7 @@ import { UserCard } from "./UserCard";
 import { UserNodesList } from "./UserNodesList";
 
 export default function UserHome() {
-    const { activeNode, addNodeModalOpen, resetPasswordModalOpen, } = useValetStore()
+    const { activeNode, addNodeModalOpen, resetPasswordModalOpen, } = useDialSiteStore()
 
     const resetEverything = () => {
         localStorage.clear()

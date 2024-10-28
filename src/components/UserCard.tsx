@@ -1,7 +1,7 @@
-import useValetStore from "../store/valetStore"
+import useDialSiteStore from "../store/dialSiteStore"
 
 export const UserCard = () => {
-  const { userInfo, onSignOut } = useValetStore()
+  const { userInfo, onSignOut } = useDialSiteStore()
   return (
     <div className="flex items-center self-end rounded-lg bg-white/10 pl-2 mr-4">
       <div>
