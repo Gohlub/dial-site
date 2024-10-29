@@ -1,14 +1,15 @@
 # Dial Website
+
 The web portal for [Uncentered Systems](https://uncentered.systems)' Dial app.
 
 Although Dial is a decentralized app built on top of [Kinode](https://github.com/kinode-dao/kinode), our goal is to create a seamless experience for users to interact with the app, requiring no knowledge of the underlying technology.
 
 ## Tasks
 
-- Sign in
-  - [ ] Email/Password
-  - [ ] Twitter
-  - [ ] SIWE
+-   Sign in
+    -   [ ] Email/Password
+    -   [ ] Twitter
+    -   [ ] SIWE
 
 ## Setup
 

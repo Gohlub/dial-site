@@ -1,22 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
 @font-face {
-  font-family: 'AllRoundGothic';
-  src: url('/AllRoundGothic-medium.woff2');
+    font-family: 'AllRoundGothic';
+    src: url('/AllRoundGothic-medium.woff2');
 }
 
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-  font-family: 'Poppins', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', '"Noto Sans"', 'sans-serif', '"Apple Color Emoji"', '"Segoe UI Emoji"', '"Segoe UI Symbol"', '"Noto Color Emoji"';
+    font-family: 'Poppins', 'ui-sans-serif', 'system-ui', '-apple-system',
+        'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"',
+        'Arial', '"Noto Sans"', 'sans-serif', '"Apple Color Emoji"',
+        '"Segoe UI Emoji"', '"Segoe UI Symbol"', '"Noto Color Emoji"';
 }
 
 a {
-  @apply text-yellow font-bold;
+    @apply text-yellow font-bold;
 }
 
 h1,
@@ -25,75 +28,75 @@ h3,
 h4,
 h5,
 h6 {
-  letter-spacing: -0.01em;
-  @apply leading-6 m-0;
+    letter-spacing: -0.01em;
+    @apply leading-6 m-0;
 }
 
 h1 {
-  @apply text-3xl;
+    @apply text-3xl;
 }
 
 h2 {
-  @apply text-2xl;
+    @apply text-2xl;
 }
 
 h3 {
-  @apply text-xl;
+    @apply text-xl;
 }
 
 h4 {
-  @apply text-lg;
+    @apply text-lg;
 }
 
 h6 {
-  @apply text-sm;
+    @apply text-sm;
 }
 
 button,
-button[type="submit"],
+button[type='submit'],
 .button {
-  @apply flex py-2 px-6 rounded border-orange bg-orange border-2 cursor-pointer place-items-center place-content-center text-center rounded-lg heading transition ease-in-out duration-100 hover:bg-black text-white;
+    @apply flex py-2 px-6 rounded border-orange bg-orange border-2 cursor-pointer place-items-center place-content-center text-center rounded-lg heading transition ease-in-out duration-100 hover:bg-black text-white;
 }
 
 .clear {
-  @apply bg-transparent border-transparent font-bold hover:bg-white/25;
+    @apply bg-transparent border-transparent font-bold hover:bg-white/25;
 }
 
 .alt {
-  @apply bg-white text-black border-white hover:text-white;
+    @apply bg-white text-black border-white hover:text-white;
 }
 
 .thin {
-  @apply px-0 border-none;
+    @apply px-0 border-none;
 }
 
 .icon {
-  @apply flex items-center place-content-center bg-transparent w-11 p-3 text-[14px] rounded-full border-white/25;
+    @apply flex items-center place-content-center bg-transparent w-11 p-3 text-[14px] rounded-full border-white/25;
 }
 
 .icon.alt {
-  @apply border-black/25 hover:border-white/25
+    @apply border-black/25 hover:border-white/25;
 }
 
 body {
-  @apply text-black bg-white bg-gradient-to-br from-white to-orange;
+    @apply text-black bg-white bg-gradient-to-br from-white to-orange;
 }
 
 select,
 textarea,
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="checkbox"] {
-  @apply px-4 py-2 rounded-lg bg-orange bg-opacity-25 text-black border-none text-lg;
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='checkbox'] {
+    @apply px-4 py-2 rounded-lg bg-orange bg-opacity-25 text-black border-none text-lg;
 }
 
-input[type="checkbox"] {
-  @apply w-2 h-2 cursor-pointer p-2;
+input[type='checkbox'] {
+    @apply w-2 h-2 cursor-pointer p-2;
 }
 
-input[type="checkbox"]:checked {
-  @apply bg-orange;
+input[type='checkbox']:checked {
+    @apply bg-orange;
 }
 
 /* ::placeholder,
@@ -104,22 +107,25 @@ input[type="checkbox"]:checked {
 } */
 
 button {
-  font-family: 'AllRoundGothic', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', '"Noto Sans"', 'sans-serif', '"Apple Color Emoji"', '"Segoe UI Emoji"', '"Segoe UI Symbol"', '"Noto Color Emoji"';
+    font-family: 'AllRoundGothic', 'ui-sans-serif', 'system-ui', '-apple-system',
+        'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"',
+        'Arial', '"Noto Sans"', 'sans-serif', '"Apple Color Emoji"',
+        '"Segoe UI Emoji"', '"Segoe UI Symbol"', '"Noto Color Emoji"';
 }
 
 button:hover {
-  @apply opacity-90 shadow-none;
+    @apply opacity-90 shadow-none;
 }
 
 button:disabled {
-  @apply opacity-70 cursor-not-allowed bg-gray border-gray;
+    @apply opacity-70 cursor-not-allowed bg-gray border-gray;
 }
 
 .obox,
 .card {
-  @apply rounded-lg p-4 bg-white/10;
+    @apply rounded-lg p-4 bg-white/10;
 }
 
 .c {
-  @apply place-items-center place-content-center;
+    @apply place-items-center place-content-center;
 }
