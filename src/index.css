@@ -19,7 +19,7 @@ body {
 }
 
 a {
-    @apply text-yellow font-bold;
+    @apply text-orange font-bold;
 }
 
 h1,
@@ -30,6 +30,16 @@ h5,
 h6 {
     letter-spacing: -0.01em;
     @apply leading-6 m-0;
+}
+
+h1,
+h2,
+h3 {
+    @apply text-orange;
+    font-family: 'AllRoundGothic', 'ui-sans-serif', 'system-ui', '-apple-system',
+        'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"',
+        'Arial', '"Noto Sans"', 'sans-serif', '"Apple Color Emoji"',
+        '"Segoe UI Emoji"', '"Segoe UI Symbol"', '"Noto Color Emoji"';
 }
 
 h1 {
@@ -59,7 +69,7 @@ button[type='submit'],
 }
 
 .clear {
-    @apply bg-transparent border-transparent font-bold hover:bg-white/25;
+    @apply bg-transparent border-transparent font-bold hover:bg-black/25;
 }
 
 .alt {
@@ -71,7 +81,7 @@ button[type='submit'],
 }
 
 .icon {
-    @apply flex items-center place-content-center bg-transparent w-11 p-3 text-[14px] rounded-full border-white/25;
+    @apply flex items-center text-black hover:text-white place-content-center bg-transparent w-11 p-3 text-[14px] rounded-full border-orange/25;
 }
 
 .icon.alt {
@@ -79,7 +89,13 @@ button[type='submit'],
 }
 
 body {
-    @apply text-black bg-white bg-gradient-to-br from-white to-orange;
+    @apply text-black;
+    background-color: #fffcf5;
+    background-image: radial-gradient(circle at -73% -33%,
+            #f8a31fff 42%,
+            transparent 62.05%),
+        radial-gradient(circle at -7% 152%, #f8a31fff 44%, transparent 72.05%),
+        radial-gradient(circle at 106% -7%, #f8a31fff 19%, transparent 44.05%);
 }
 
 select,

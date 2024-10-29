@@ -6,6 +6,7 @@ import { UserNode } from '../types/UserNode'
 import { middleware } from '../utilities/middleware'
 import { ServerAlert } from '../types/ServerAlert'
 import { ClientAlert } from '../types/ClientAlert'
+import { ProductSubscription } from '../types/Subscriptions'
 
 export interface DialSiteStore {
     token: string
@@ -20,6 +21,9 @@ export interface DialSiteStore {
     onSignOut: () => void
     addNodeModalOpen: boolean
     setAddNodeModalOpen: (addNodeModalOpen: boolean) => void
+    checkProducts: (locale: string) => Promise<ProductSubscription[]>
+    purchaseProduct: (fee: { productId: number, periodicity: string, price: number }) => Promise<{ message: string, subscriptionId: number } | null>
+    assignSubscription: (subscriptionId: number, kinodeName: string, kinodePassword: string) => Promise<boolean>
     resetPasswordModalOpen: boolean
     setResetPasswordModalOpen: (resetPasswordModalOpen: boolean) => void
     checkIsNodeAvailable: (node: string) => Promise<boolean>
@@ -31,8 +35,6 @@ export interface DialSiteStore {
         node: UserNode,
         passwordHash: string,
     ) => Promise<{ success: boolean; error: boolean | string }>
-    activeNode: UserNode | null
-    setActiveNode: (node: UserNode | null) => void
     serverIsUnderMaintenance: boolean
     setServerIsUnderMaintenance: (serverIsUnderMaintenance: boolean) => void
     expectedAvailabilityDate: number | null
@@ -43,7 +45,6 @@ export interface DialSiteStore {
     setAlerts: (alerts: Array<ServerAlert | ClientAlert>) => void
     addClientAlert: (message: any, id?: number, _class?: string) => void
     getServerAlerts: () => Promise<void>
-    onRegenerateSshPassword: (node: UserNode) => Promise<void>
     get: () => DialSiteStore
     set: (state: DialSiteStore) => void
     redirectToX: () => Promise<void>
@@ -52,8 +53,9 @@ export interface DialSiteStore {
         email: string,
         msg: string,
     ) => Promise<{ success: boolean; error: boolean | string }>
-    loadingStage: string
-    setLoadingStage: (loadingStage: string) => void
+    loadingStage?: string
+    setLoadingStage: (loadingStage?: string) => void
+    addContactEmail: (email: string) => Promise<boolean>
     loginWithEmail: (email: string, hash: string) => Promise<boolean>
     registerEmail: (email: string, hash: string) => Promise<boolean>
     verifyEmail: (email: string, hash: string, code: string) => Promise<boolean>
@@ -66,7 +68,6 @@ const useDialSiteStore = create<DialSiteStore>()(
             get,
             viteMode: import.meta.env.MODE,
             token: '',
-            activeNode: null,
             serverIsUnderMaintenance: false,
             expectedAvailabilityDate: null,
             alerts: [],
@@ -77,7 +78,6 @@ const useDialSiteStore = create<DialSiteStore>()(
             ) => set({ expectedAvailabilityDate }),
             setServerIsUnderMaintenance: (serverIsUnderMaintenance: boolean) =>
                 set({ serverIsUnderMaintenance }),
-            setActiveNode: (node: UserNode | null) => set({ activeNode: node }),
             setToken: (token: string) => set({ token }),
             redirectToX: async () => {
                 const { setAlerts } = get()
@@ -198,8 +198,8 @@ const useDialSiteStore = create<DialSiteStore>()(
                 console.log({ loginResult: result })
                 return true
             },
-            loadingStage: 'Getting User Info',
-            setLoadingStage: (loadingStage: string) => set({ loadingStage }),
+            loadingStage: '',
+            setLoadingStage: (loadingStage?: string) => set({ loadingStage }),
             getUserInfo: async () => {
                 const {
                     token,
@@ -265,8 +265,6 @@ const useDialSiteStore = create<DialSiteStore>()(
             getUserNodes: async (existingTimeout?: NodeJS.Timeout) => {
                 const {
                     token,
-                    activeNode,
-                    setActiveNode,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     addClientAlert,
@@ -302,15 +300,8 @@ const useDialSiteStore = create<DialSiteStore>()(
                     return
                 }
                 if (
-                    activeNode &&
-                    !result.data.find((n: UserNode) => n.id === activeNode.id)
-                ) {
-                    setActiveNode(null)
-                }
-                if (
                     result.data &&
-                    Array.isArray(result.data) &&
-                    result.data.find((n: UserNode) => n.ship_type === 'kinode')
+                    Array.isArray(result.data)
                 ) {
                     set({ userNodes: result.data })
                 } else if (!existingTimeout) {
@@ -318,6 +309,97 @@ const useDialSiteStore = create<DialSiteStore>()(
                         get().getUserNodes(timeout)
                     }, 10000)
                 }
+            },
+            getCookie: async (passwordHash: string) => {
+                const { token } = get()
+                if (!token) return null
+                const result = await middleware(
+                    axios.get(`/api/get-cookie/${passwordHash}`, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }),
+                )
+            },
+            checkProducts: async (locale: string) => {
+                const { addClientAlert, setServerIsUnderMaintenance, setExpectedAvailabilityDate } = get()
+                const result = await middleware(
+                    axios.get(`/api/products/${locale}`, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            client_id: 2,
+                        },
+                    }),
+                );
+                if (result.maintenance) {
+                    setServerIsUnderMaintenance(true)
+                    setExpectedAvailabilityDate(result.expectedAvailability)
+                    return []
+                }
+                setServerIsUnderMaintenance(false)
+                setExpectedAvailabilityDate(null)
+                if (result.error) {
+                    addClientAlert(
+                        'Error fetching products. Please sign in again if issue persists.',
+                    )
+                    return []
+                }
+                console.log({ products: result })
+                return result.data as ProductSubscription[]
+            },
+            purchaseProduct: async (fee: { productId: number, periodicity: string, price: number }) => {
+                const { token, setServerIsUnderMaintenance, setExpectedAvailabilityDate, addClientAlert, } = get()
+                const result = await middleware(
+                    axios.post(`/api/user/purchase-product`, fee, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                    })
+                )
+                if (result.maintenance) {
+                    setServerIsUnderMaintenance(true)
+                    setExpectedAvailabilityDate(result.expectedAvailability)
+                    return null
+                }
+                setServerIsUnderMaintenance(false)
+                setExpectedAvailabilityDate(null)
+                if (result.error || !result.data?.message || !result.data?.subscriptionId) {
+                    addClientAlert(
+                        'Error fetching products. Please sign in again if issue persists.',
+                    )
+                    return null
+                }
+                console.log({ purchaseProductResult: result })
+                return result.data as { message: string, subscriptionId: number }
+            },
+            assignSubscription: async (subscriptionId: number, kinodeName: string, kinodePassword: string) => {
+                const { token } = get()
+                if (!kinodePassword.startsWith('0x')) {
+                    kinodePassword = '0x' + kinodePassword
+                }
+                const result = await middleware(
+                    axios.post(`/api/user/assign-subscription`, {
+                        subscriptionId,
+                        kinodeName,
+                        kinodePassword,
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                    })
+                )
+                console.log({ assignSubscriptionResult: result })
+                return !result.error
+            },
+            addContactEmail: async (email: string) => {
+                const { token } = get()
+                const result = await middleware(
+                    axios.post(`/api/user/set-contact-email`, { email }, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } })
+                )
+                return !result.error
             },
             userNodes: [],
             setUserNodes: (userNodes: UserNode[]) => set({ userNodes }),
@@ -327,53 +409,6 @@ const useDialSiteStore = create<DialSiteStore>()(
                 setUserInfo(null)
                 setUserNodes([])
                 setAlerts([])
-            },
-            onRegenerateSshPassword: async (node: UserNode) => {
-                const {
-                    token,
-                    setServerIsUnderMaintenance,
-                    setExpectedAvailabilityDate,
-                    setActiveNode,
-                    addClientAlert,
-                    onSignOut,
-                } = get()
-                const result = await middleware(
-                    axios.put(
-                        `/api/regenerate-ssh-password/${node.id}`,
-                        {},
-                        {
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${token}`,
-                            },
-                        },
-                    ),
-                )
-                if (result.maintenance) {
-                    setServerIsUnderMaintenance(true)
-                    setExpectedAvailabilityDate(result.expectedAvailability)
-                    return
-                }
-                setServerIsUnderMaintenance(false)
-                setExpectedAvailabilityDate(null)
-                if (result.error) {
-                    if (result.loginAgain) {
-                        alert('Your session has timed out. Please log in.')
-                        onSignOut()
-                        return
-                    }
-
-                    if (!result?.data?.ssh_password) {
-                        addClientAlert(
-                            'Error regenerating SSH password. Please sign in again if issue persists.',
-                        )
-                    }
-                    return
-                }
-                setActiveNode({
-                    ...node,
-                    ssh_password: result.data.ssh_password,
-                })
             },
             addNodeModalOpen: false,
             setAddNodeModalOpen: (addNodeModalOpen: boolean) => {

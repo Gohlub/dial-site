@@ -7,7 +7,7 @@ Although Dial is a decentralized app built on top of [Kinode](https://github.com
 ## Tasks
 
 -   Sign in
-    -   [ ] Email/Password
+    -   [x] Email/Password
     -   [ ] Twitter
     -   [ ] SIWE
 

@@ -3,17 +3,27 @@ import { useEffect, useState } from 'react'
 import { useIsMobile } from '../utilities/dimensions'
 import { sha256 } from '../utilities/hash'
 import { FaCircleNotch } from 'react-icons/fa'
-import StagedLoadingOverlay from './StagedLoadingOverlay'
+import { FaXTwitter } from 'react-icons/fa6'
 
 export const SignupBox = () => {
-    const { registerEmail, verifyEmail, getUserNodes } = useDialSiteStore()
+    const {
+        registerEmail,
+        verifyEmail,
+        setLoadingStage,
+        redirectToX,
+        checkIsNodeAvailable,
+        bootNode,
+        checkProducts,
+        purchaseProduct,
+        addContactEmail,
+        assignSubscription,
+        getUserNodes,
+        userNodes,
+        // getCookie,
+    } = useDialSiteStore()
     const [loading, setLoading] = useState(false)
-    const [shouldPollUserNodes, setShouldPollUserNodes] = useState(false)
-    const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(
-        null,
-    )
     const [signupStage, setSignupStage] = useState<
-        'credentials' | 'code' | 'complete'
+        'credentials' | 'code' | 'node-name' | 'get-cookie' | 'complete'
     >('credentials')
     const [signupEmail, setSignupEmail] = useState('')
     const [signupPassword, setSignupPassword] = useState('')
@@ -23,7 +33,8 @@ export const SignupBox = () => {
         useState('')
     const [signupCode, setSignupCode] = useState('')
     const [alertText, setAlertText] = useState('')
-
+    const [signupNodeName, setSignupNodeName] = useState('')
+    const [nodeNameAvailable, setNodeNameAvailable] = useState(false)
     const onSignupPasswordChanged = async (password: string) => {
         setSignupPassword(password)
         const hashHex = await sha256(password)
@@ -40,6 +51,10 @@ export const SignupBox = () => {
         setLoading(true)
         if (signupPassword !== signupConfirmPassword) {
             setAlertText('Passwords do not match')
+            return
+        }
+        if (signupPassword.length < 8 || signupConfirmPassword.length < 8) {
+            setAlertText('Password must be at least 8 characters long.')
             return
         }
         setAlertText('')
@@ -66,7 +81,7 @@ export const SignupBox = () => {
         )
         setLoading(false)
         if (result) {
-            setSignupStage('complete')
+            setSignupStage('node-name')
         }
     }
 
@@ -78,30 +93,101 @@ export const SignupBox = () => {
         }
     }, [signupPassword, signupConfirmPassword])
 
+    let signupNodeNameTimeout: NodeJS.Timeout | null = null
     useEffect(() => {
-        if (signupStage === 'complete') {
-            setShouldPollUserNodes(true)
+        if (signupStage !== 'node-name') return
+        if (signupNodeName === '') {
+            setAlertText('Please enter a node name.')
+            return
         }
-    }, [signupStage])
+        if (!signupNodeName.match(/^[a-z0-9-]+$/)) {
+            setAlertText('Node name must be alphanumeric, with dashes allowed.')
+            return
+        }
+        if (signupNodeName.length < 9) {
+            setAlertText('Node name must be at least 9 characters long.')
+            return
+        }
+        if (signupNodeNameTimeout) {
+            clearTimeout(signupNodeNameTimeout)
+        }
+        signupNodeNameTimeout = setTimeout(async () => {
+            const result = await checkIsNodeAvailable(signupNodeName)
+            if (!result) {
+                setNodeNameAvailable(false)
+                setAlertText('Node name is not available.')
+            }
+            else {
+                setNodeNameAvailable(true)
+                setAlertText('')
+            }
+        }, 1500)
+    }, [signupNodeName])
 
-    useEffect(() => {
-        if (shouldPollUserNodes && !pollInterval) {
-            const interval = setInterval(() => {
-                getUserNodes().then((nodes) => {
-                    console.log({ nodes })
-                })
-            }, 1000)
-            setPollInterval(interval)
+
+    const onBootNode = async () => {
+        if (signupPassword.length < 8 || signupPasswordHash !== signupConfirmPasswordHash)
+            return alert(
+                'Password must be at least 8 characters long, and passwords must match.',
+            )
+        setLoading(true)
+        const { success, error } = await bootNode(signupNodeName, signupPasswordHash)
+        if (success) {
+            setSignupStage('get-cookie')
+            setLoadingStage('preload')
+            getUserNodes()
+        } else {
+            alert(`Something went wrong: ${error}. Please try again.`)
         }
-    }, [shouldPollUserNodes])
+        setLoading(false)
+        console.log({ success, error })
+    }
+
+    const onPurchaseFreeTrial = async () => {
+        const products = await checkProducts('en')
+        console.log({ products })
+        const freeTrialProduct = products.find(p => p.title === 'Dial Subscription')
+        if (!freeTrialProduct) {
+            alert('No free trial product found (1).')
+            return
+        }
+        const freeTrial = freeTrialProduct.price_options.find(p => p.amount === 0)
+        if (!freeTrial) {
+            alert('No free trial product found (2).')
+            return
+        }
+        const subscription = await purchaseProduct({
+            productId: freeTrialProduct.id,
+            periodicity: freeTrial.periodicity,
+            price: freeTrial.amount,
+        })
+        if (!subscription) {
+            alert('Failed to purchase free trial.')
+            return
+        }
+        await addContactEmail(signupEmail)
+        await assignSubscription(subscription.subscriptionId, signupNodeName, signupPasswordHash)
+        await onBootNode()
+        setLoading(false)
+    }
+
+    // useEffect(() => {
+    //     if (signupStage === 'get-cookie') {
+    //         const cookie = await getCookie(signupPasswordHash)
+    //         console.log({ cookie })
+    //         if (cookie && userNodes.length > 0) {
+    //             window.location.href = `${userNodes[0].link}/curator:dial:uncentered.os`
+    //         }
+    //     }
+    // }, [signupStage])
 
     const isMobile = useIsMobile()
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:gap-4 gap-2 items-center max-h-screen overflow-y-auto">
             {signupStage === 'credentials' && (
                 <>
-                    <h3>Sign up with email</h3>
+                    <h3 className="text-2xl">Create an account</h3>
                     <input
                         type="email"
                         placeholder="Email"
@@ -111,6 +197,7 @@ export const SignupBox = () => {
                     <input
                         type="password"
                         placeholder="Password"
+                        minLength={8}
                         value={signupPassword}
                         onChange={(e) =>
                             onSignupPasswordChanged(e.target.value)
@@ -119,16 +206,14 @@ export const SignupBox = () => {
                     <input
                         type="password"
                         placeholder="Confirm Password"
+                        minLength={8}
                         value={signupConfirmPassword}
                         onChange={(e) =>
                             onSignupConfirmPasswordChanged(e.target.value)
                         }
                     />
-                    {alertText && (
-                        <div className="text-red-500">{alertText}</div>
-                    )}
                     <button
-                        className="text-lg"
+                        className="text-lg self-stretch"
                         disabled={
                             signupEmail === '' ||
                             signupPassword === '' ||
@@ -143,6 +228,14 @@ export const SignupBox = () => {
                             'Sign up'
                         )}
                     </button>
+                    <h4> Single Sign-On </h4>
+                    <button
+                        onClick={redirectToX}
+                        className="bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
+                    >
+                        <FaXTwitter />
+                        <span className="text-white">Sign up with X</span>
+                    </button>
                 </>
             )}
             {signupStage === 'code' && (
@@ -156,9 +249,10 @@ export const SignupBox = () => {
                         type="text"
                         placeholder="Code"
                         value={signupCode}
+                        className="self-stretch"
                         onChange={(e) => setSignupCode(e.target.value)}
                     />
-                    <button className="text-lg" onClick={onVerify}>
+                    <button className="text-lg self-stretch" onClick={onVerify}>
                         {loading ? (
                             <FaCircleNotch className="animate-spin" />
                         ) : (
@@ -167,10 +261,37 @@ export const SignupBox = () => {
                     </button>
                 </>
             )}
-            {signupStage === 'complete' && (
+            {signupStage === 'node-name' && (
                 <>
-                    <StagedLoadingOverlay />
+                    <h3>Choose a node name</h3>
+                    <p>Your node name identifies you to the network, like a username for your Kinode.</p>
+                    <input
+                        type="text"
+                        placeholder="some-sweet-moniker"
+                        value={signupNodeName}
+                        onChange={(e) => setSignupNodeName(e.target.value)}
+                    />
+                    <span className="text-sm text-gray-500 text-center">
+                        Node names must be at least 9 characters long,<br /> and can
+                        only contain alphanumeric characters and dashes.
+                    </span>
+                    {nodeNameAvailable && (
+                        <>
+                            <button
+                                className="text-lg !bg-blue-500 border-blue-200"
+                                onClick={onPurchaseFreeTrial}
+                                disabled={loading}
+                            >
+                                {loading ? <FaCircleNotch className="animate-spin" /> : 'Continue'}
+                            </button>
+                        </>
+                    )}
                 </>
+            )}
+            {alertText && (
+                <div className="bg-red-500 text-white p-4 rounded-md">
+                    {alertText}
+                </div>
             )}
         </div>
     )

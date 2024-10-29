@@ -10,10 +10,10 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 export const Modal: React.FC<Props> = ({ title, onClose, children }) => {
     const isMobile = useIsMobile()
     return (
-        <div className="flex fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 place-items-center place-content-center backdrop-blur-md">
+        <div className="flex fixed top-0 left-0 w-full h-full bg-black/10 place-items-center place-content-center backdrop-blur-md">
             <div
                 className={classNames(
-                    'flex flex-col rounded-lg bg-black py-4 shadow-lg gap-2',
+                    'flex flex-col rounded-lg bg-white py-4 shadow-lg gap-2',
                     {
                         'min-w-[500px] px-8 max-w-3/4': !isMobile,
                         'px-4 w-full': isMobile,

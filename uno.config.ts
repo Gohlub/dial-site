@@ -25,6 +25,7 @@ const config = {
             gray: '#242d25',
             grey: '#242d25',
             yellow: '#fff0af',
+            orange: '#f8a31f',
         },
         font: {
             sans: [

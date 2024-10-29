@@ -2,6 +2,7 @@ import useDialSiteStore from '../store/dialSiteStore'
 import { useState } from 'react'
 import { useIsMobile } from '../utilities/dimensions'
 import { sha256 } from '../utilities/hash'
+import { FaXTwitter } from 'react-icons/fa6'
 
 export const LoginBox = () => {
     const { redirectToX, loginWithEmail } = useDialSiteStore()
@@ -19,7 +20,8 @@ export const LoginBox = () => {
     const isMobile = useIsMobile()
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 items-center">
+            <h3 className="text-2xl">Login to Dial</h3>
             <input
                 type="email"
                 placeholder="Email"
@@ -33,16 +35,17 @@ export const LoginBox = () => {
                 onChange={(e) => onLoginPasswordChanged(e.target.value)}
             />
             <button
-                className="text-lg"
+                className="text-lg self-stretch"
                 onClick={() => loginWithEmail(loginEmail, loginPasswordHash)}
             >
                 Sign in
             </button>
             <button
-                className="bg-blue-500 text-lg border-blue-200"
                 onClick={redirectToX}
+                className="bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
             >
-                Sign in with X
+                <FaXTwitter />
+                <span className="text-white">Sign in with X</span>
             </button>
         </div>
     )

@@ -1,4 +1,5 @@
 export const NODE_LOADING_STAGES = {
+    'preload': 'Loading...',
     'kinode-booting-0': 'Finding a home for this kinode...',
     'kinode-booting-1': 'Preparing node on server...',
     'kinode-booting-2': 'Minting the name...',
@@ -6,5 +7,5 @@ export const NODE_LOADING_STAGES = {
     'kinode-booting-4': 'Issuing node certificate...',
     'kinode-booting-5': 'Networking...',
     'kinode-booting-6': 'Installing apps...',
-    kinode: 'Running and ready!',
+    kinode: 'Acquiring authentication cookie...',
 }
