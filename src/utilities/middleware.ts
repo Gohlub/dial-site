@@ -1,4 +1,14 @@
-export const middleware = async (axiosAction: Promise<any>) => {
+export interface MiddlewareResult {
+    status: number
+    data: any
+    message: string
+    error: boolean
+    maintenance: boolean
+    expectedAvailability: number | null
+    loginAgain?: boolean
+}
+
+export const middleware = async (axiosAction: Promise<any>): Promise<MiddlewareResult> => {
     try {
         const result = await axiosAction
         console.log({ axios: result })
@@ -13,6 +23,8 @@ export const middleware = async (axiosAction: Promise<any>) => {
     } catch (e: any) {
         if (e.response?.status === 409) {
             return {
+                status: e.response?.status,
+                data: e.response?.data,
                 error: true,
                 message:
                     e.response?.data?.message ||
@@ -22,6 +34,8 @@ export const middleware = async (axiosAction: Promise<any>) => {
             }
         } else if (e.response?.status === 503) {
             return {
+                status: e.response?.status,
+                data: e.response?.data,
                 error: true,
                 message: 'Please login again.',
                 maintenance: false,
@@ -30,6 +44,8 @@ export const middleware = async (axiosAction: Promise<any>) => {
             }
         } else {
             return {
+                status: e.response?.status,
+                data: e.response?.data,
                 error: true,
                 message:
                     e.response?.data?.message || e.message || 'Server Error',

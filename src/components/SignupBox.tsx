@@ -1,11 +1,15 @@
-import useDialSiteStore from '../store/dialSiteStore'
+import useDialSiteStore, { LoginMode } from '../store/dialSiteStore'
 import { useEffect, useState } from 'react'
 import { useIsMobile } from '../utilities/dimensions'
 import { sha256 } from '../utilities/hash'
 import { FaCircleNotch } from 'react-icons/fa'
-import { FaXTwitter } from 'react-icons/fa6'
+import { FaEthereum, FaXTwitter } from 'react-icons/fa6'
 
-export const SignupBox = () => {
+export const SignupBox = ({
+    initialSignupStage = 'credentials',
+}: {
+    initialSignupStage?: 'credentials' | 'code' | 'node-name' | 'await-boot' | 'complete'
+}) => {
     const {
         registerEmail,
         verifyEmail,
@@ -19,12 +23,17 @@ export const SignupBox = () => {
         assignSubscription,
         getUserNodes,
         userNodes,
+        addClientAlert,
+        loginMode,
+        setLoginMode,
+        getSiweNonce,
+        siweNonce,
         // getCookie,
     } = useDialSiteStore()
     const [loading, setLoading] = useState(false)
     const [signupStage, setSignupStage] = useState<
-        'credentials' | 'code' | 'node-name' | 'get-cookie' | 'complete'
-    >('credentials')
+        'credentials' | 'code' | 'node-name' | 'await-boot' | 'complete'
+    >(initialSignupStage)
     const [signupEmail, setSignupEmail] = useState('')
     const [signupPassword, setSignupPassword] = useState('')
     const [signupPasswordHash, setSignupPasswordHash] = useState('')
@@ -47,7 +56,8 @@ export const SignupBox = () => {
         setSignupConfirmPasswordHash(hashHex)
     }
 
-    const onSignup = async () => {
+    const onSignupWithEmail = async () => {
+        setLoginMode(LoginMode.Email)
         setLoading(true)
         if (signupPassword !== signupConfirmPassword) {
             setAlertText('Passwords do not match')
@@ -133,7 +143,7 @@ export const SignupBox = () => {
         setLoading(true)
         const { success, error } = await bootNode(signupNodeName, signupPasswordHash)
         if (success) {
-            setSignupStage('get-cookie')
+            setSignupStage('await-boot')
             setLoadingStage('preload')
             getUserNodes()
         } else {
@@ -148,12 +158,12 @@ export const SignupBox = () => {
         console.log({ products })
         const freeTrialProduct = products.find(p => p.title === 'Dial Subscription')
         if (!freeTrialProduct) {
-            alert('No free trial product found (1).')
+            addClientAlert('No free trial product found (E#1).')
             return
         }
         const freeTrial = freeTrialProduct.price_options.find(p => p.amount === 0)
         if (!freeTrial) {
-            alert('No free trial product found (2).')
+            addClientAlert('No free trial product found (E#2).')
             return
         }
         const subscription = await purchaseProduct({
@@ -162,24 +172,21 @@ export const SignupBox = () => {
             price: freeTrial.amount,
         })
         if (!subscription) {
-            alert('Failed to purchase free trial.')
+            addClientAlert('Failed to purchase free trial (E#3).')
             return
         }
-        await addContactEmail(signupEmail)
+        if (signupEmail) {
+            await addContactEmail(signupEmail)
+        }
         await assignSubscription(subscription.subscriptionId, signupNodeName, signupPasswordHash)
         await onBootNode()
         setLoading(false)
     }
 
-    // useEffect(() => {
-    //     if (signupStage === 'get-cookie') {
-    //         const cookie = await getCookie(signupPasswordHash)
-    //         console.log({ cookie })
-    //         if (cookie && userNodes.length > 0) {
-    //             window.location.href = `${userNodes[0].link}/curator:dial:uncentered.os`
-    //         }
-    //     }
-    // }, [signupStage])
+    const onSiweSignupClick = async () => {
+        await getSiweNonce()
+        setLoginMode(LoginMode.SIWE)
+    }
 
     const isMobile = useIsMobile()
 
@@ -220,7 +227,7 @@ export const SignupBox = () => {
                             signupConfirmPassword === '' ||
                             alertText !== ''
                         }
-                        onClick={onSignup}
+                        onClick={onSignupWithEmail}
                     >
                         {loading ? (
                             <FaCircleNotch className="animate-spin" />
@@ -236,6 +243,17 @@ export const SignupBox = () => {
                         <FaXTwitter />
                         <span className="text-white">Sign up with X</span>
                     </button>
+                    <button
+                        onClick={onSiweSignupClick}
+                    >
+                        <FaEthereum />
+                        <span className="text-white">Sign up with Ethereum</span>
+                    </button>
+                    {siweNonce && (
+                        <div className="text-sm text-gray-500">
+                            Nonce: {siweNonce}
+                        </div>
+                    )}
                 </>
             )}
             {signupStage === 'code' && (

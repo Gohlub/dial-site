@@ -16,7 +16,7 @@ export const Home = () => {
     const {
         getServerAlerts,
         get,
-        token,
+        emailToken: token,
         getUserInfo,
         getUserNodes,
         userNodes,

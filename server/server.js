@@ -24,15 +24,21 @@ app.use(
 app.use(bodyParser.json())
 
 // Route to handle the redirection after the user clicks "Sign in with X"
-app.post('/api/get-x-redirect-url', async (req, res) => {
+app.post('/api/x/signup', async (req, res) => {
     try {
         const preliminaryUrl = req.body.returnUrl.replace(/\/$/, '')
-        const finalRedirectUrl = `${preliminaryUrl}/process-token?token=`
+        const finalRedirectUrl = `${preliminaryUrl}/x-callback?token=`
         const whitelistFailureUrl = `${preliminaryUrl}/not-whitelisted`
         const response = await axios.post(`${API_URL}/x/get-redirect-url`, {
             finalRedirectUrl,
             whitelistFailureUrl,
-        })
+            },
+            {
+                headers: {
+                    client_id: 2,
+                },
+            },
+        )
         const { url } = response.data
         res.send(url)
     } catch (error) {
@@ -58,6 +64,11 @@ app.all('*', async (req, res) => {
             params: query,
             headers,
         })
+
+        // Handle 304 Not Modified separately since it won't have response data
+        if (response.status === 304) {
+            return res.sendStatus(304)
+        }
 
         res.status(response.status).json(response.data)
     } catch (error) {

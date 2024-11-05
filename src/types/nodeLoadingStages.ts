@@ -7,5 +7,5 @@ export const NODE_LOADING_STAGES = {
     'kinode-booting-4': 'Issuing node certificate...',
     'kinode-booting-5': 'Networking...',
     'kinode-booting-6': 'Installing apps...',
-    kinode: 'Acquiring authentication cookie...',
+    kinode: 'Awaiting redirect...',
 }

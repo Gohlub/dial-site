@@ -1,16 +1,30 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import axios from 'axios'
+import axios, { AxiosResponse } from 'axios'
 import { UserInfo, isUserInfoValid } from '../types/UserInfo'
 import { UserNode } from '../types/UserNode'
-import { middleware } from '../utilities/middleware'
+import { middleware, MiddlewareResult } from '../utilities/middleware'
 import { ServerAlert } from '../types/ServerAlert'
 import { ClientAlert } from '../types/ClientAlert'
 import { ProductSubscription } from '../types/Subscriptions'
 
+
+export enum LoginMode {
+    None,
+    Email,
+    X,
+    SIWE,
+};
+
 export interface DialSiteStore {
-    token: string
-    setToken: (token: string) => void
+    emailToken: string
+    setEmailToken: (token: string) => void
+    xToken: string
+    setXToken: (token: string) => void
+    siweToken: string
+    setSiweToken: (token: string) => void
+    loginMode: LoginMode
+    setLoginMode: (loginMode: LoginMode) => void
     getUserInfo: () => Promise<void>
     userInfo: UserInfo | null
     setUserInfo: (userInfo: UserInfo | null) => void
@@ -59,6 +73,9 @@ export interface DialSiteStore {
     loginWithEmail: (email: string, hash: string) => Promise<boolean>
     registerEmail: (email: string, hash: string) => Promise<boolean>
     verifyEmail: (email: string, hash: string, code: string) => Promise<boolean>
+    siweNonce: string
+    setSiweNonce: (nonce: string) => void
+    getSiweNonce: () => Promise<void>
 }
 
 const useDialSiteStore = create<DialSiteStore>()(
@@ -67,7 +84,14 @@ const useDialSiteStore = create<DialSiteStore>()(
             set,
             get,
             viteMode: import.meta.env.MODE,
-            token: '',
+            emailToken: '',
+            setEmailToken: (token: string) => set({ emailToken: token }),
+            xToken: '',
+            setXToken: (token: string) => set({ xToken: token }),
+            siweToken: '',
+            setSiweToken: (token: string) => set({ siweToken: token }),
+            loginMode: LoginMode.None,
+            setLoginMode: (loginMode: LoginMode) => set({ loginMode }),
             serverIsUnderMaintenance: false,
             expectedAvailabilityDate: null,
             alerts: [],
@@ -78,11 +102,10 @@ const useDialSiteStore = create<DialSiteStore>()(
             ) => set({ expectedAvailabilityDate }),
             setServerIsUnderMaintenance: (serverIsUnderMaintenance: boolean) =>
                 set({ serverIsUnderMaintenance }),
-            setToken: (token: string) => set({ token }),
             redirectToX: async () => {
                 const { setAlerts } = get()
                 const { data } = await axios.post(
-                    `/api/get-x-redirect-url`,
+                    `/api/x/signup`,
                     {
                         returnUrl: window.location.href,
                     },
@@ -90,11 +113,24 @@ const useDialSiteStore = create<DialSiteStore>()(
                         headers: {
                             accept: 'application/json',
                             'Content-Type': 'application/json',
+                            client_id: 2,
                         },
                     },
                 )
                 window.location.href = data
                 setAlerts([])
+            },
+            siweNonce: '',
+            setSiweNonce: (nonce: string) => set({ siweNonce: nonce }),
+            getSiweNonce: async () => {
+                const result = await middleware(axios.get(`/api/siwe/nonce`, {
+                    headers: { client_id: 2 },
+                }))
+                const { shouldReturn, returnValue } = handleMaintenanceState(result, get())
+                if (shouldReturn) {
+                    return returnValue
+                }
+                get().setSiweNonce(result.data)
             },
             registerEmail: async (email: string, hash: string) => {
                 const { setAlerts } = get()
@@ -131,7 +167,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return true
             },
             verifyEmail: async (email: string, hash: string, code: string) => {
-                const { setAlerts, setToken } = get()
+                const { setAlerts, setEmailToken: setToken } = get()
                 const result = await middleware(
                     axios.post(
                         `/api/email/verify-account`,
@@ -202,7 +238,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             setLoadingStage: (loadingStage?: string) => set({ loadingStage }),
             getUserInfo: async () => {
                 const {
-                    token,
+                    emailToken: token,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     addClientAlert,
@@ -264,7 +300,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             getUserNodes: async (existingTimeout?: NodeJS.Timeout) => {
                 const {
-                    token,
+                    emailToken: token,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     addClientAlert,
@@ -311,7 +347,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 }
             },
             getCookie: async (passwordHash: string) => {
-                const { token } = get()
+                const { emailToken: token } = get()
                 if (!token) return null
                 const result = await middleware(
                     axios.get(`/api/get-cookie/${passwordHash}`, {
@@ -349,7 +385,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return result.data as ProductSubscription[]
             },
             purchaseProduct: async (fee: { productId: number, periodicity: string, price: number }) => {
-                const { token, setServerIsUnderMaintenance, setExpectedAvailabilityDate, addClientAlert, } = get()
+                const { emailToken: token, setServerIsUnderMaintenance, setExpectedAvailabilityDate, addClientAlert, } = get()
                 const result = await middleware(
                     axios.post(`/api/user/purchase-product`, fee, {
                         headers: {
@@ -375,7 +411,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return result.data as { message: string, subscriptionId: number }
             },
             assignSubscription: async (subscriptionId: number, kinodeName: string, kinodePassword: string) => {
-                const { token } = get()
+                const { emailToken: token } = get()
                 if (!kinodePassword.startsWith('0x')) {
                     kinodePassword = '0x' + kinodePassword
                 }
@@ -395,7 +431,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return !result.error
             },
             addContactEmail: async (email: string) => {
-                const { token } = get()
+                const { emailToken: token } = get()
                 const result = await middleware(
                     axios.post(`/api/user/set-contact-email`, { email }, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } })
                 )
@@ -404,7 +440,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             userNodes: [],
             setUserNodes: (userNodes: UserNode[]) => set({ userNodes }),
             onSignOut: () => {
-                const { setToken, setAlerts, setUserInfo, setUserNodes } = get()
+                const { setEmailToken: setToken, setAlerts, setUserInfo, setUserNodes } = get()
                 setToken('')
                 setUserInfo(null)
                 setUserNodes([])
@@ -433,7 +469,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             checkIsNodeAvailable: async (node: string) => {
                 const {
-                    token,
+                    emailToken: token,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     addClientAlert,
@@ -475,7 +511,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             bootNode: async (kinodeName: string, passwordHash: string) => {
                 const {
-                    token,
+                    emailToken: token,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     onSignOut,
@@ -534,7 +570,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             resetNodePassword: async (node: UserNode, passwordHash: string) => {
                 const {
-                    token,
+                    emailToken: token,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                 } = get()
@@ -584,7 +620,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 msg: string,
             ) => {
                 const {
-                    token,
+                    emailToken: token,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                 } = get()
@@ -630,5 +666,22 @@ const useDialSiteStore = create<DialSiteStore>()(
         },
     ),
 )
+
+const handleMaintenanceState = (
+    result: MiddlewareResult,
+    store: DialSiteStore
+): { shouldReturn: boolean; returnValue?: any } => {
+    const { setServerIsUnderMaintenance, setExpectedAvailabilityDate } = store;
+
+    if (result.data.maintenance) {
+        setServerIsUnderMaintenance(true);
+        setExpectedAvailabilityDate(result.data.expectedAvailability || null);
+        return { shouldReturn: true, returnValue: null };
+    }
+
+    setServerIsUnderMaintenance(false);
+    setExpectedAvailabilityDate(null);
+    return { shouldReturn: false };
+};
 
 export default useDialSiteStore
