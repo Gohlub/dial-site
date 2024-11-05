@@ -25,6 +25,7 @@ export interface DialSiteStore {
     setSiweToken: (token: string) => void
     loginMode: LoginMode
     setLoginMode: (loginMode: LoginMode) => void
+    getTokenViaLoginMode: () => string | null
     getUserInfo: () => Promise<void>
     userInfo: UserInfo | null
     setUserInfo: (userInfo: UserInfo | null) => void
@@ -385,7 +386,12 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return result.data as ProductSubscription[]
             },
             purchaseProduct: async (fee: { productId: number, periodicity: string, price: number }) => {
-                const { emailToken: token, setServerIsUnderMaintenance, setExpectedAvailabilityDate, addClientAlert, } = get()
+                const { getTokenViaLoginMode, setServerIsUnderMaintenance, setExpectedAvailabilityDate, addClientAlert, } = get()
+                const token = getTokenViaLoginMode()
+                if (!token) {
+                    addClientAlert('You are not signed in. Please do so in order to perform this action.')
+                    return null
+                }
                 const result = await middleware(
                     axios.post(`/api/user/purchase-product`, fee, {
                         headers: {
@@ -467,14 +473,23 @@ const useDialSiteStore = create<DialSiteStore>()(
                     },
                 ])
             },
+            getTokenViaLoginMode: () => {
+                const { loginMode, emailToken, xToken, siweToken } = get()
+                if (loginMode === LoginMode.Email) return emailToken
+                if (loginMode === LoginMode.X) return xToken
+                if (loginMode === LoginMode.SIWE) return siweToken
+                return null
+            },
             checkIsNodeAvailable: async (node: string) => {
                 const {
-                    emailToken: token,
+                    getTokenViaLoginMode,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     addClientAlert,
                     onSignOut,
                 } = get()
+                const token = getTokenViaLoginMode()
+                console.log({ checkNodeName: { token } });
                 if (!token) return false
                 if (node.endsWith('.os')) {
                     node = node.replace('.os', '')

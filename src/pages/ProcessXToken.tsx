@@ -8,7 +8,6 @@ import { SignupBox } from '../components/SignupBox'
 export const ProcessXToken = () => {
     const location = useLocation()
     const nav = useNavigate()
-    const { setXToken } = useDialSiteStore()
 
     const searchParams = new URLSearchParams(location.search)
     const token = searchParams.get('token')
@@ -17,10 +16,9 @@ export const ProcessXToken = () => {
 
     useEffect(() => {
         if (token) {
-            setXToken(token)
+            nav(`/?x=${token}`)
         } else {
             alert('Something went wrong. Please try again.')
-            nav('/')
         }
     }, [token])
 
@@ -28,7 +26,6 @@ export const ProcessXToken = () => {
         <>
             <NavBar />
             <Alerts />
-            <SignupBox initialSignupStage="node-name" />
         </>
     )
 }

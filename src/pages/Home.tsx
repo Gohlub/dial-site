@@ -1,4 +1,4 @@
-import useDialSiteStore from '../store/dialSiteStore'
+import useDialSiteStore, { LoginMode } from '../store/dialSiteStore'
 import { useEffect, useState } from 'react'
 import { UserNode } from '../types/UserNode'
 import dayjs from 'dayjs'
@@ -10,13 +10,22 @@ import { LoginBox } from '../components/LoginBox'
 import { SignupBox } from '../components/SignupBox'
 import StagedLoadingOverlay from '../components/StagedLoadingOverlay'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { useLocation } from 'react-router-dom'
 dayjs.extend(relativeTime)
 
 export const Home = () => {
     const {
         getServerAlerts,
         get,
-        emailToken: token,
+        xToken,
+        siweToken,
+        emailToken,
+        setXToken,
+        setSiweToken,
+        setEmailToken,
+        loginMode,
+        setLoginMode,
+        getTokenViaLoginMode,
         getUserInfo,
         getUserNodes,
         userNodes,
@@ -26,24 +35,43 @@ export const Home = () => {
         setLoadingStage,
     } = useDialSiteStore()
 
-    const [mode, setMode] = useState<'login' | 'signup'>('login')
-    console.log({ loadingStage })
+    const location = useLocation()
+    const searchParams = new URLSearchParams(location.search)
+
+    const [entryMode, setEntryMode] = useState<'login' | 'signup'>('login')
+    const [userToken, setUserToken] = useState<string | null>(null)
 
     useEffect(() => {
-        if (!token) {
-            setLoadingStage()
+        console.log('searchParams', searchParams)
+        const xTokenQueryParam = searchParams.get('x')
+        const siweTokenQueryParam = searchParams.get('siwe')
+        console.log({ xTokenQueryParam, siweTokenQueryParam })
+        if (xTokenQueryParam && xTokenQueryParam !== xToken) {
+            setLoginMode(LoginMode.X)
+            setXToken(xTokenQueryParam)
+            setEmailToken('')
+            setSiweToken('')
+        } else if (siweTokenQueryParam && siweTokenQueryParam !== siweToken) {
+            setLoginMode(LoginMode.SIWE)
+            setSiweToken(siweTokenQueryParam)
+            setXToken('')
+            setEmailToken('')
         }
-    }, [loadingStage])
+    }, [searchParams])
+
+    useEffect(() => {
+        setUserToken(getTokenViaLoginMode())
+    }, [xToken, siweToken, emailToken])
 
     useEffect(() => {
         getServerAlerts()
-        if (token) {
+        if (userToken) {
             getUserInfo()
             getUserNodes()
         }
         const intervalId = setInterval(async () => {
             await getServerAlerts()
-            if (token) {
+            if (userToken) {
                 await getUserInfo()
                 await getUserNodes()
                 const { userNodes } = get()
@@ -57,17 +85,18 @@ export const Home = () => {
         }, 10000)
 
         return () => clearInterval(intervalId)
-    }, [token])
+    }, [userToken])
 
     const isMobile = useIsMobile()
 
-    const showSignIn = !token || userNodes?.length === 0
+    // const showSignIn = !userToken || userNodes?.length === 0
+    // console.log({ userNodes, userToken })
 
     return (
         <>
             <NavBar />
             <Alerts />
-            {showSignIn && (
+            {!userToken && (
                 <div className="flex grow self-stretch">
                     <div
                         className={classNames(
@@ -80,7 +109,7 @@ export const Home = () => {
                     >
                         <img
                             src="/favicon.png"
-                            className={classNames('shadow-lg', {
+                            className={classNames('shadow-lg rounded-xl', {
                                 'h-24 min-h-24 w-24 min-w-24': !isMobile,
                                 'h-16 min-h-16 w-16 min-w-16': isMobile,
                             })}
@@ -89,26 +118,26 @@ export const Home = () => {
                         <div className="md:text-xl text-center">
                             Read and curate the best content from anywhere.
                         </div>
-                        {mode === 'login' && <LoginBox />}
-                        {mode === 'signup' && <SignupBox />}
+                        {entryMode === 'login' && <LoginBox />}
+                        {entryMode === 'signup' && <SignupBox />}
                         <div className="h-[1px] bg-black w-full" />
-                        {mode === 'login' && (
+                        {entryMode === 'login' && (
                             <>
                                 <h4>Don't have an account?</h4>
                                 <button
                                     className="text-lg alt"
-                                    onClick={() => setMode('signup')}
+                                    onClick={() => setEntryMode('signup')}
                                 >
                                     Sign up
                                 </button>
                             </>
                         )}
-                        {mode === 'signup' && (
+                        {entryMode === 'signup' && (
                             <>
                                 <h4>Already have an account?</h4>
                                 <button
                                     className="text-lg alt"
-                                    onClick={() => setMode('login')}
+                                    onClick={() => setEntryMode('login')}
                                 >
                                     Sign in
                                 </button>
@@ -117,6 +146,10 @@ export const Home = () => {
                     </div>
                 </div>
             )}
+            {userToken && userNodes?.length === 0 &&
+                loginMode === LoginMode.X ? <SignupBox />
+                : <p>Unrecognized signup mode</p>
+            }
             {loadingStage && <StagedLoadingOverlay />}
             {serverIsUnderMaintenance && (
                 <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col place-items-center place-content-center">

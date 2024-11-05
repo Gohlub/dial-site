@@ -1,15 +1,13 @@
 import useDialSiteStore, { LoginMode } from '../store/dialSiteStore'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useIsMobile } from '../utilities/dimensions'
 import { sha256 } from '../utilities/hash'
 import { FaCircleNotch } from 'react-icons/fa'
-import { FaEthereum, FaXTwitter } from 'react-icons/fa6'
+import { FaEnvelope, FaEthereum, FaXTwitter } from 'react-icons/fa6'
+import classNames from 'classnames'
+import { debounce } from '../utilities/debounce'
 
-export const SignupBox = ({
-    initialSignupStage = 'credentials',
-}: {
-    initialSignupStage?: 'credentials' | 'code' | 'node-name' | 'await-boot' | 'complete'
-}) => {
+export const SignupBox = () => {
     const {
         registerEmail,
         verifyEmail,
@@ -22,18 +20,15 @@ export const SignupBox = ({
         addContactEmail,
         assignSubscription,
         getUserNodes,
-        userNodes,
         addClientAlert,
-        loginMode,
-        setLoginMode,
         getSiweNonce,
         siweNonce,
-        // getCookie,
+        loginMode,
     } = useDialSiteStore()
     const [loading, setLoading] = useState(false)
     const [signupStage, setSignupStage] = useState<
         'credentials' | 'code' | 'node-name' | 'await-boot' | 'complete'
-    >(initialSignupStage)
+    >('credentials')
     const [signupEmail, setSignupEmail] = useState('')
     const [signupPassword, setSignupPassword] = useState('')
     const [signupPasswordHash, setSignupPasswordHash] = useState('')
@@ -57,7 +52,6 @@ export const SignupBox = ({
     }
 
     const onSignupWithEmail = async () => {
-        setLoginMode(LoginMode.Email)
         setLoading(true)
         if (signupPassword !== signupConfirmPassword) {
             setAlertText('Passwords do not match')
@@ -96,6 +90,12 @@ export const SignupBox = ({
     }
 
     useEffect(() => {
+        if (signupStage === 'credentials' && loginMode === LoginMode.X) {
+            setSignupStage('node-name')
+        }
+    }, [loginMode])
+
+    useEffect(() => {
         if (signupPassword !== signupConfirmPassword) {
             setAlertText('Passwords do not match')
         } else {
@@ -103,7 +103,15 @@ export const SignupBox = ({
         }
     }, [signupPassword, signupConfirmPassword])
 
-    let signupNodeNameTimeout: NodeJS.Timeout | null = null
+    const debouncedNodeNameCheck = useCallback(
+        debounce(async (nodeName: string) => {
+            const result = await checkIsNodeAvailable(nodeName)
+            setNodeNameAvailable(result)
+            setAlertText(result ? '' : 'Node name is not available.')
+        }, 500),
+        []
+    )
+
     useEffect(() => {
         if (signupStage !== 'node-name') return
         if (signupNodeName === '') {
@@ -118,22 +126,8 @@ export const SignupBox = ({
             setAlertText('Node name must be at least 9 characters long.')
             return
         }
-        if (signupNodeNameTimeout) {
-            clearTimeout(signupNodeNameTimeout)
-        }
-        signupNodeNameTimeout = setTimeout(async () => {
-            const result = await checkIsNodeAvailable(signupNodeName)
-            if (!result) {
-                setNodeNameAvailable(false)
-                setAlertText('Node name is not available.')
-            }
-            else {
-                setNodeNameAvailable(true)
-                setAlertText('')
-            }
-        }, 1500)
+        debouncedNodeNameCheck(signupNodeName)
     }, [signupNodeName])
-
 
     const onBootNode = async () => {
         if (signupPassword.length < 8 || signupPasswordHash !== signupConfirmPasswordHash)
@@ -184,16 +178,41 @@ export const SignupBox = ({
     }
 
     const onSiweSignupClick = async () => {
-        await getSiweNonce()
-        setLoginMode(LoginMode.SIWE)
+        const nonce = await getSiweNonce()
+        console.log({ nonce })
     }
 
     const isMobile = useIsMobile()
+    const boxClass = classNames('flex flex-col gap-2 place-items-center rounded-xl bg-white/50 backdrop-blur-lg p-4', {
+        'max-w-screen': isMobile,
+        'max-w-[700px]': !isMobile,
+    });
 
     return (
-        <div className="flex flex-col md:gap-4 gap-2 items-center max-h-screen overflow-y-auto">
+        <div className={classNames("flex flex-col md:gap-4 gap-2 items-center max-h-screen overflow-y-auto", {
+            ' grow self-stretch place-items-center place-content-center': signupStage !== 'credentials',
+        })}>
+            {loginMode !== LoginMode.None && (
+                <div className={classNames("text-white text-xl flex items-center gap-2 rounded-xl p-4", {
+                    'bg-white/10': loginMode === LoginMode.Email,
+                    'bg-blue-500': loginMode === LoginMode.X,
+                    'bg-[#627EEA]': loginMode === LoginMode.SIWE,
+                })}>
+                    {loginMode === LoginMode.SIWE ? (
+                        <FaEthereum />
+                    ) : loginMode === LoginMode.X ? (
+                        <FaXTwitter />
+                    ) : loginMode === LoginMode.Email ? (
+                        <FaEnvelope />
+                    ) : null}
+                    <span>You're signing up with {loginMode === LoginMode.X ?
+                        'X' : loginMode === LoginMode.SIWE ?
+                            'Ethereum' :
+                            'email'}</span>
+                </div>
+            )}
             {signupStage === 'credentials' && (
-                <>
+                <div className={boxClass}>
                     <h3 className="text-2xl">Create an account</h3>
                     <input
                         type="email"
@@ -254,10 +273,10 @@ export const SignupBox = ({
                             Nonce: {siweNonce}
                         </div>
                     )}
-                </>
+                </div>
             )}
             {signupStage === 'code' && (
-                <>
+                <div className={boxClass}>
                     <h3>Check your email</h3>
                     <p>
                         We sent a code to {signupEmail}.<br />
@@ -277,17 +296,18 @@ export const SignupBox = ({
                             'Verify'
                         )}
                     </button>
-                </>
+                </div>
             )}
             {signupStage === 'node-name' && (
-                <>
+                <div className={boxClass}>
                     <h3>Choose a node name</h3>
-                    <p>Your node name identifies you to the network, like a username for your Kinode.</p>
+                    <p>Your node name identifies you to the network, like a username.</p>
                     <input
                         type="text"
                         placeholder="some-sweet-moniker"
                         value={signupNodeName}
                         onChange={(e) => setSignupNodeName(e.target.value)}
+                        onBlur={() => debouncedNodeNameCheck(signupNodeName)}
                     />
                     <span className="text-sm text-gray-500 text-center">
                         Node names must be at least 9 characters long,<br /> and can
@@ -304,7 +324,7 @@ export const SignupBox = ({
                             </button>
                         </>
                     )}
-                </>
+                </div>
             )}
             {alertText && (
                 <div className="bg-red-500 text-white p-4 rounded-md">
