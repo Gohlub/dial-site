@@ -11,6 +11,7 @@ import { SignupBox } from '../components/SignupBox'
 import StagedLoadingOverlay from '../components/StagedLoadingOverlay'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { useLocation } from 'react-router-dom'
+import { NODE_LOADING_STAGES } from '../types/nodeLoadingStages'
 dayjs.extend(relativeTime)
 
 export const Home = () => {
@@ -42,10 +43,10 @@ export const Home = () => {
     const [userToken, setUserToken] = useState<string | null>(null)
 
     useEffect(() => {
-        console.log('searchParams', searchParams)
+        // console.log('searchParams', searchParams)
         const xTokenQueryParam = searchParams.get('x')
         const siweTokenQueryParam = searchParams.get('siwe')
-        console.log({ xTokenQueryParam, siweTokenQueryParam })
+        // console.log({ xTokenQueryParam, siweTokenQueryParam })
         if (xTokenQueryParam && xTokenQueryParam !== xToken) {
             setLoginMode(LoginMode.X)
             setXToken(xTokenQueryParam)
@@ -150,7 +151,11 @@ export const Home = () => {
                 loginMode === LoginMode.X ? <SignupBox />
                 : <p>Unrecognized signup mode</p>
             }
-            {loadingStage && <StagedLoadingOverlay />}
+            {loadingStage && <StagedLoadingOverlay
+                stages={NODE_LOADING_STAGES}
+                currentStage={loadingStage}
+                finalStage="kinode"
+            />}
             {serverIsUnderMaintenance && (
                 <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col place-items-center place-content-center">
                     <div className="text-white text-4xl">

@@ -6,12 +6,15 @@ import { FaCircleNotch } from 'react-icons/fa'
 import { FaEnvelope, FaEthereum, FaXTwitter } from 'react-icons/fa6'
 import classNames from 'classnames'
 import { debounce } from '../utilities/debounce'
+import StagedLoadingOverlay from './StagedLoadingOverlay'
 
 export const SignupBox = () => {
     const {
         registerEmail,
         verifyEmail,
         setLoadingStage,
+        pendingSubscription,
+        setPendingSubscription,
         redirectToX,
         checkIsNodeAvailable,
         bootNode,
@@ -19,11 +22,14 @@ export const SignupBox = () => {
         purchaseProduct,
         addContactEmail,
         assignSubscription,
+        userNodes,
+        userInfo,
         getUserNodes,
         addClientAlert,
         getSiweNonce,
         siweNonce,
         loginMode,
+        getTokenViaLoginMode,
     } = useDialSiteStore()
     const [loading, setLoading] = useState(false)
     const [signupStage, setSignupStage] = useState<
@@ -39,6 +45,38 @@ export const SignupBox = () => {
     const [alertText, setAlertText] = useState('')
     const [signupNodeName, setSignupNodeName] = useState('')
     const [nodeNameAvailable, setNodeNameAvailable] = useState(false)
+    const [initializationStage, setInitializationStage] = useState<keyof typeof INITIALIZATION_STAGES>('none')
+
+    console.log({
+        loading,
+        signupStage,
+        signupEmail,
+        signupPassword,
+        signupConfirmPassword,
+        signupCode,
+        signupNodeName,
+        nodeNameAvailable,
+        alertText,
+        userNodes,
+        userInfo,
+        loginMode,
+        siweNonce,
+        initializationStage,
+        token: getTokenViaLoginMode(),
+        signupPasswordHash,
+        signupConfirmPasswordHash,
+    })
+
+    const INITIALIZATION_STAGES = {
+        'none': '',
+        'check-products': 'Checking products...',
+        'purchase-free-trial': 'Purchasing free trial...',
+        'assign-subscription': 'Assigning subscription...',
+        'add-contact-email': 'Adding contact email...',
+        'boot-node': 'Booting node...',
+        'complete': 'Account created!',
+    }
+
     const onSignupPasswordChanged = async (password: string) => {
         setSignupPassword(password)
         const hashHex = await sha256(password)
@@ -92,14 +130,24 @@ export const SignupBox = () => {
     useEffect(() => {
         if (signupStage === 'credentials' && loginMode === LoginMode.X) {
             setSignupStage('node-name')
+            if (!signupPasswordHash) {
+                const token = getTokenViaLoginMode()
+                if (token) {
+                    sha256(token).then(hashHex => {
+                        setSignupPasswordHash(hashHex)
+                    })
+                }
+            }
         }
     }, [loginMode])
 
     useEffect(() => {
-        if (signupPassword !== signupConfirmPassword) {
-            setAlertText('Passwords do not match')
-        } else {
-            setAlertText('')
+        if (loginMode === LoginMode.Email) {
+            if (signupPassword !== signupConfirmPassword) {
+                setAlertText('Passwords do not match')
+            } else {
+                setAlertText('')
+            }
         }
     }, [signupPassword, signupConfirmPassword])
 
@@ -130,50 +178,66 @@ export const SignupBox = () => {
     }, [signupNodeName])
 
     const onBootNode = async () => {
-        if (signupPassword.length < 8 || signupPasswordHash !== signupConfirmPasswordHash)
-            return alert(
+        if (loginMode === LoginMode.Email && (signupPassword.length < 8 || signupPasswordHash !== signupConfirmPasswordHash)) {
+            alert(
                 'Password must be at least 8 characters long, and passwords must match.',
             )
+            return false
+        }
         setLoading(true)
         const { success, error } = await bootNode(signupNodeName, signupPasswordHash)
         if (success) {
-            setSignupStage('await-boot')
             setLoadingStage('preload')
             getUserNodes()
         } else {
             alert(`Something went wrong: ${error}. Please try again.`)
+            return false
         }
         setLoading(false)
         console.log({ success, error })
+        return true
     }
 
     const onPurchaseFreeTrial = async () => {
-        const products = await checkProducts('en')
-        console.log({ products })
-        const freeTrialProduct = products.find(p => p.title === 'Dial Subscription')
-        if (!freeTrialProduct) {
-            addClientAlert('No free trial product found (E#1).')
-            return
+        setInitializationStage('check-products')
+        let subscription: { subscriptionId: number, message: string } | null = pendingSubscription
+        if (!subscription) {
+            const products = await checkProducts('en')
+            // console.log({ products })
+            const freeTrialProduct = products.find(p => p.title === 'Dial Subscription')
+            if (!freeTrialProduct) {
+                addClientAlert('No free trial product found (E#1).')
+                return
+            }
+            const freeTrial = freeTrialProduct.price_options.find(p => p.amount === 0)
+            if (!freeTrial) {
+                addClientAlert('No free trial product found (E#2).')
+                return
+            }
+            setInitializationStage('purchase-free-trial')
+            subscription = await purchaseProduct({
+                productId: freeTrialProduct.id,
+                periodicity: freeTrial.periodicity,
+                price: freeTrial.amount,
+            })
+            setPendingSubscription(subscription)
         }
-        const freeTrial = freeTrialProduct.price_options.find(p => p.amount === 0)
-        if (!freeTrial) {
-            addClientAlert('No free trial product found (E#2).')
-            return
-        }
-        const subscription = await purchaseProduct({
-            productId: freeTrialProduct.id,
-            periodicity: freeTrial.periodicity,
-            price: freeTrial.amount,
-        })
         if (!subscription) {
             addClientAlert('Failed to purchase free trial (E#3).')
+            setInitializationStage('none')
             return
         }
         if (signupEmail) {
+            setInitializationStage('add-contact-email')
             await addContactEmail(signupEmail)
         }
+        setInitializationStage('assign-subscription')
         await assignSubscription(subscription.subscriptionId, signupNodeName, signupPasswordHash)
-        await onBootNode()
+        setInitializationStage('boot-node')
+        const bootSuccess = await onBootNode()
+        if (bootSuccess) {
+            setInitializationStage('complete')
+        }
         setLoading(false)
     }
 
@@ -183,9 +247,8 @@ export const SignupBox = () => {
     }
 
     const isMobile = useIsMobile()
-    const boxClass = classNames('flex flex-col gap-2 place-items-center rounded-xl bg-white/50 backdrop-blur-lg p-4', {
-        'max-w-screen': isMobile,
-        'max-w-[700px]': !isMobile,
+    const boxClass = classNames('flex flex-col gap-2 place-items-center rounded-xl bg-white/75 shadow-xl backdrop-blur-lg p-4 w-screen', {
+        'max-w-[600px]': !isMobile,
     });
 
     return (
@@ -325,6 +388,13 @@ export const SignupBox = () => {
                         </>
                     )}
                 </div>
+            )}
+            {initializationStage !== 'none' && initializationStage !== 'complete' && (
+                <StagedLoadingOverlay
+                    stages={INITIALIZATION_STAGES}
+                    currentStage={initializationStage}
+                    finalStage="complete"
+                />
             )}
             {alertText && (
                 <div className="bg-red-500 text-white p-4 rounded-md">

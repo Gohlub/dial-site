@@ -26,6 +26,11 @@ export interface DialSiteStore {
     loginMode: LoginMode
     setLoginMode: (loginMode: LoginMode) => void
     getTokenViaLoginMode: () => string | null
+    pendingSubscription: {
+        subscriptionId: number,
+        message: string
+    } | null;
+    setPendingSubscription: (pendingSubscription: { subscriptionId: number, message: string } | null) => void
     getUserInfo: () => Promise<void>
     userInfo: UserInfo | null
     setUserInfo: (userInfo: UserInfo | null) => void
@@ -237,14 +242,17 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             loadingStage: '',
             setLoadingStage: (loadingStage?: string) => set({ loadingStage }),
+            pendingSubscription: null,
+            setPendingSubscription: (pendingSubscription: { subscriptionId: number, message: string } | null) => set({ pendingSubscription }),
             getUserInfo: async () => {
                 const {
-                    emailToken: token,
+                    getTokenViaLoginMode,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     addClientAlert,
                     onSignOut,
                 } = get()
+                const token = getTokenViaLoginMode()
                 if (!token) return
                 const result = await middleware(
                     axios.get(`/api/user/get-user-info`, {
@@ -301,12 +309,13 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             getUserNodes: async (existingTimeout?: NodeJS.Timeout) => {
                 const {
-                    emailToken: token,
+                    getTokenViaLoginMode,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     addClientAlert,
                     onSignOut,
                 } = get()
+                const token = getTokenViaLoginMode()
                 if (!token) return
                 const result = await middleware(
                     axios.get(`/api/get-user-kinodes`, {
@@ -346,18 +355,6 @@ const useDialSiteStore = create<DialSiteStore>()(
                         get().getUserNodes(timeout)
                     }, 10000)
                 }
-            },
-            getCookie: async (passwordHash: string) => {
-                const { emailToken: token } = get()
-                if (!token) return null
-                const result = await middleware(
-                    axios.get(`/api/get-cookie/${passwordHash}`, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }),
-                )
             },
             checkProducts: async (locale: string) => {
                 const { addClientAlert, setServerIsUnderMaintenance, setExpectedAvailabilityDate } = get()
@@ -417,7 +414,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return result.data as { message: string, subscriptionId: number }
             },
             assignSubscription: async (subscriptionId: number, kinodeName: string, kinodePassword: string) => {
-                const { emailToken: token } = get()
+                const { getTokenViaLoginMode } = get()
+                const token = getTokenViaLoginMode()
+                if (!token) return false
                 if (!kinodePassword.startsWith('0x')) {
                     kinodePassword = '0x' + kinodePassword
                 }
@@ -437,7 +436,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return !result.error
             },
             addContactEmail: async (email: string) => {
-                const { emailToken: token } = get()
+                const { getTokenViaLoginMode } = get()
+                const token = getTokenViaLoginMode()
+                if (!token) return false
                 const result = await middleware(
                     axios.post(`/api/user/set-contact-email`, { email }, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } })
                 )
@@ -526,11 +527,12 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             bootNode: async (kinodeName: string, passwordHash: string) => {
                 const {
-                    emailToken: token,
+                    getTokenViaLoginMode,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     onSignOut,
                 } = get()
+                const token = getTokenViaLoginMode()
                 if (!token)
                     return {
                         success: false,
@@ -585,10 +587,11 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             resetNodePassword: async (node: UserNode, passwordHash: string) => {
                 const {
-                    emailToken: token,
+                    getTokenViaLoginMode,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                 } = get()
+                const token = getTokenViaLoginMode()
                 if (!token)
                     return {
                         success: false,
@@ -635,10 +638,16 @@ const useDialSiteStore = create<DialSiteStore>()(
                 msg: string,
             ) => {
                 const {
-                    emailToken: token,
+                    getTokenViaLoginMode,
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                 } = get()
+                const token = getTokenViaLoginMode()
+                if (!token)
+                    return {
+                        success: false,
+                        error: 'Token is required. Please log in.',
+                    }
                 const result = await middleware(
                     axios.post(
                         `/api/${token ? 'logged-' : ''}send-contact-email`,

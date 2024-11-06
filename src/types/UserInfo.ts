@@ -1,8 +1,20 @@
 export interface UserInfo {
-    twitterScreenName: string
-    twitterUserId: string
-    userId: number
-    maxKinodes: number
+    id: number
+    contact_email: string | null
+    password: boolean
+    max_kinodes: number
+    remaining_kinodes: number
+    remaining_trial: boolean
+    emailLogins: []
+    siweLogins: []
+    xLogins: [
+        {
+            id: number
+            functional_identifier: string
+            display_identifier: string
+            last_used: string
+        }
+    ]
 }
 
 export const isUserInfoValid = (

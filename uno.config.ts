@@ -19,7 +19,7 @@ const config = {
     theme: {
         colors: {
             white: '#fffcf5',
-            black: '#0d1c10',
+            black: '#001',
             green: '#005d30',
             transparent: 'transparent',
             gray: '#242d25',

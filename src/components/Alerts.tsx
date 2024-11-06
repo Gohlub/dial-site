@@ -28,7 +28,7 @@ export const Alerts: React.FC = () => {
                     <div
                         key={alert.id}
                         className={classNames(
-                            'flex gap-2 text-white py-2 px-4 rounded-md mb-2 backdrop-blur-md relative',
+                            'flex gap-2  py-2 px-4 rounded-md mb-2 backdrop-blur-md relative',
                             {
                                 'bg-red-500/25':
                                     alert.class === 'danger' ||
@@ -61,7 +61,7 @@ export const Alerts: React.FC = () => {
                             )}
                         >
                             <button
-                                className="clear grow"
+                                className="text-black clear grow"
                                 onClick={() =>
                                     setAlerts(
                                         alerts.map((a) =>
@@ -76,7 +76,7 @@ export const Alerts: React.FC = () => {
                             </button>
                             {i < 1 && (
                                 <button
-                                    className="clear grow"
+                                    className="text-black clear grow"
                                     onClick={() => setAlerts([])}
                                 >
                                     Clear all
