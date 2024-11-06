@@ -88,6 +88,16 @@ export const Home = () => {
         return () => clearInterval(intervalId)
     }, [userToken])
 
+    useEffect(() => {
+        if (userNodes?.length > 0) {
+            const firstNode = userNodes[0]
+            if (firstNode?.link && firstNode.ship_type === 'kinode') {
+                setLoadingStage('kinode')
+                // window.location.href = `${firstNode.link}/login`
+            }
+        }
+    }, [userNodes])
+
     const isMobile = useIsMobile()
 
     // const showSignIn = !userToken || userNodes?.length === 0
@@ -147,10 +157,7 @@ export const Home = () => {
                     </div>
                 </div>
             )}
-            {userToken && userNodes?.length === 0 &&
-                loginMode === LoginMode.X ? <SignupBox />
-                : <p>Unrecognized signup mode</p>
-            }
+            {userToken && userNodes?.length === 0 && <SignupBox />}
             {loadingStage && <StagedLoadingOverlay
                 stages={NODE_LOADING_STAGES}
                 currentStage={loadingStage}

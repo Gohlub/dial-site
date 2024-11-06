@@ -4,6 +4,11 @@ import { Link } from 'react-router-dom'
 export default function NavBar() {
     const { viteMode } = useDialSiteStore()
 
+    const nukeButton = <button onClick={() => {
+        localStorage.clear();
+        sessionStorage.clear();
+    }}>Clear storage</button>
+
     return (
         <div className="flex items-center gap-4 p-4 self-stretch bg-white shadow-xl">
             <Link
@@ -18,12 +23,14 @@ export default function NavBar() {
             {viteMode === 'production' ? (
                 <></>
             ) : viteMode === 'staging' ? (
-                <div className="absolute bottom-4 left-4 text-3xl font-black text-yellow-300 z-50 animate-pulse bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(234,179,8,0.8)] transform hover:scale-110 transition-all duration-300 cursor-pointer rounded-xl border-4 border-yellow-300 border-opacity-50 p-2">
+                <div className="flex gap-2 absolute bottom-4 left-4 text-3xl font-black text-yellow-300 z-50 animate-pulse bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(234,179,8,0.8)] transform hover:scale-110 transition-all duration-300 cursor-pointer rounded-xl border-4 border-yellow-300 border-opacity-50 p-2">
                     🚧 STAGING MODE 🚧
+                    {nukeButton}
                 </div>
             ) : (
-                <div className="absolute bottom-4 left-4 text-3xl font-black text-fuchsia-500 z-50 animate-bounce bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] transform hover:scale-110 transition-all duration-300 cursor-pointer">
+                <div className="flex gap-2 absolute bottom-4 left-4 text-3xl font-black text-fuchsia-500 z-50 animate-bounce bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] transform hover:scale-110 transition-all duration-300 cursor-pointer">
                     ✨ DEV MODE ✨
+                    {nukeButton}
                 </div>
             )}
         </div>

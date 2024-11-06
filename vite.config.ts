@@ -10,6 +10,20 @@ export default defineConfig({
             NODE_ENV: process.env.NODE_ENV,
         },
     },
+    resolve: {
+        alias: {
+            process: 'process/browser',
+            stream: 'stream-browserify',
+            buffer: 'buffer',
+        },
+    },
+    optimizeDeps: {
+        esbuildOptions: {
+            define: {
+                global: 'globalThis',
+            },
+        },
+    },
     server: {
         proxy: {
             '/api': {

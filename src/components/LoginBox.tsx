@@ -1,11 +1,23 @@
-import useDialSiteStore from '../store/dialSiteStore'
+import useDialSiteStore, { LoginMode } from '../store/dialSiteStore'
 import { useState } from 'react'
 import { useIsMobile } from '../utilities/dimensions'
 import { sha256 } from '../utilities/hash'
-import { FaXTwitter } from 'react-icons/fa6'
+import { FaEthereum, FaXTwitter } from 'react-icons/fa6'
+import { OPTIMISM_CHAIN_ID } from '../utilities/eth'
+import { switchToOptimism } from '../utilities/eth'
+import { ethers } from 'ethers'
+import { SiweMessage } from 'siwe'
 
 export const LoginBox = () => {
-    const { redirectToX, loginWithEmail } = useDialSiteStore()
+    const {
+        redirectToX,
+        loginWithEmail,
+        setLoginMode,
+        getSiweNonce,
+        registerSiwe,
+        setSiweToken,
+        addClientAlert,
+    } = useDialSiteStore()
 
     const [loginEmail, setLoginEmail] = useState('')
     const [loginPassword, setLoginPassword] = useState('')
@@ -15,6 +27,57 @@ export const LoginBox = () => {
         setLoginPassword(password)
         const hashHex = await sha256(password)
         setLoginPasswordHash(hashHex)
+    }
+
+
+    const onSiweSignInClick = async () => {
+        setLoginMode(LoginMode.SIWE)
+        try {
+            console.log('checking ethereum')
+            if (!(window as any).ethereum) {
+                addClientAlert('Please install MetaMask or another Ethereum wallet')
+                return
+            }
+
+            // Ensure we're on Optimism
+            await switchToOptimism()
+
+            console.log('getting signer')
+            const provider = new ethers.BrowserProvider((window as any).ethereum)
+            const signer = await provider.getSigner()
+            const address = await signer.getAddress()
+
+            console.log('getting nonce')
+            const nonce = await getSiweNonce()
+            console.log({ nonce })
+            console.log('creating message')
+            // Create SIWE message
+            const message = new SiweMessage({
+                domain: window.location.host,
+                address,
+                statement: 'Sign in with Ethereum to Dial.',
+                uri: window.location.origin,
+                version: '1',
+                chainId: Number(OPTIMISM_CHAIN_ID),
+                nonce
+            })
+
+            console.log({ message })
+
+            // Convert to text
+            const messageToSign = message.prepareMessage()
+
+            // Request signature from wallet
+            const signature = await signer.signMessage(messageToSign)
+
+            const reginResult = await registerSiwe(messageToSign, signature)
+            if (reginResult?.jwt) {
+                setSiweToken(reginResult.jwt)
+            }
+        } catch (error) {
+            console.error(error)
+            addClientAlert('Failed to sign in with Ethereum: ' + (error as Error).message)
+        }
     }
 
     const isMobile = useIsMobile()
@@ -40,13 +103,20 @@ export const LoginBox = () => {
             >
                 Sign in
             </button>
-            <button
-                onClick={redirectToX}
-                className="bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
-            >
-                <FaXTwitter />
-                <span className="text-white">Sign in with X</span>
-            </button>
+            <div className="flex gap-4 grow self-stretch">
+                <button
+                    onClick={redirectToX}
+                    className="grow bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
+                >
+                    <FaXTwitter />
+                </button>
+                <button
+                    onClick={onSiweSignInClick}
+                    className="grow bg-[#627EEA] text-lg border-[#627EEA] self-stretch gap-4 items-center flex"
+                >
+                    <FaEthereum />
+                </button>
+            </div>
         </div>
     )
 }

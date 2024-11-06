@@ -19,5 +19,15 @@ export interface UserNode {
     ssh_address: string
     ssh_username: string
     ssh_password: string
+    subscription_id: number
+    subscription_status: string
+    periodicity: string
+    start?: number
+    end?: number
     local_http_port: string
+}
+
+export interface UserNodesInfo {
+    nodes: UserNode[]
+    unassigned_subscriptions: any[]
 }

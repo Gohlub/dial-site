@@ -7,6 +7,9 @@ import { FaEnvelope, FaEthereum, FaXTwitter } from 'react-icons/fa6'
 import classNames from 'classnames'
 import { debounce } from '../utilities/debounce'
 import StagedLoadingOverlay from './StagedLoadingOverlay'
+import { SiweMessage } from 'siwe'
+import { ethers } from 'ethers'
+import { OPTIMISM_CHAIN_ID, switchToOptimism } from '../utilities/eth'
 
 export const SignupBox = () => {
     const {
@@ -29,7 +32,10 @@ export const SignupBox = () => {
         getSiweNonce,
         siweNonce,
         loginMode,
+        setLoginMode,
         getTokenViaLoginMode,
+        registerSiwe,
+        siweToken,
     } = useDialSiteStore()
     const [loading, setLoading] = useState(false)
     const [signupStage, setSignupStage] = useState<
@@ -127,6 +133,58 @@ export const SignupBox = () => {
         }
     }
 
+    const onSiweSignupClick = async () => {
+        setAlertText('')
+        setLoading(true)
+        setLoginMode(LoginMode.SIWE)
+        try {
+            console.log('checking ethereum')
+            if (!(window as any).ethereum) {
+                setAlertText('Please install MetaMask or another Ethereum wallet')
+                return
+            }
+
+            // Ensure we're on Optimism
+            await switchToOptimism()
+
+            console.log('getting signer')
+            const provider = new ethers.BrowserProvider((window as any).ethereum)
+            const signer = await provider.getSigner()
+            const address = await signer.getAddress()
+
+            console.log('getting nonce')
+            const nonce = await getSiweNonce()
+            console.log({ nonce })
+            console.log('creating message')
+            // Create SIWE message
+            const message = new SiweMessage({
+                domain: window.location.host,
+                address,
+                statement: 'Sign in with Ethereum to Dial.',
+                uri: window.location.origin,
+                version: '1',
+                chainId: Number(OPTIMISM_CHAIN_ID),
+                nonce
+            })
+
+            console.log({ message })
+
+            // Convert to text
+            const messageToSign = message.prepareMessage()
+
+            // Request signature from wallet
+            const signature = await signer.signMessage(messageToSign)
+
+            await registerSiwe(messageToSign, signature)
+            setSignupStage('node-name')
+        } catch (error) {
+            console.error(error)
+            setAlertText('Failed to sign in with Ethereum: ' + (error as Error).message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     useEffect(() => {
         if (signupStage === 'credentials' && loginMode === LoginMode.X) {
             setSignupStage('node-name')
@@ -140,6 +198,17 @@ export const SignupBox = () => {
             }
         }
     }, [loginMode])
+
+    useEffect(() => {
+        if (signupStage === 'credentials' && loginMode === LoginMode.SIWE && siweToken) {
+            setSignupStage('node-name')
+            if (!signupPasswordHash) {
+                sha256(siweToken).then(hashHex => {
+                    setSignupPasswordHash(hashHex)
+                })
+            }
+        }
+    }, [loginMode, signupStage, siweToken])
 
     useEffect(() => {
         if (loginMode === LoginMode.Email) {
@@ -241,11 +310,6 @@ export const SignupBox = () => {
         setLoading(false)
     }
 
-    const onSiweSignupClick = async () => {
-        const nonce = await getSiweNonce()
-        console.log({ nonce })
-    }
-
     const isMobile = useIsMobile()
     const boxClass = classNames('flex flex-col gap-2 place-items-center rounded-xl bg-white/75 shadow-xl backdrop-blur-lg p-4 w-screen', {
         'max-w-[600px]': !isMobile,
@@ -275,7 +339,7 @@ export const SignupBox = () => {
                 </div>
             )}
             {signupStage === 'credentials' && (
-                <div className={boxClass}>
+                <>
                     <h3 className="text-2xl">Create an account</h3>
                     <input
                         type="email"
@@ -317,26 +381,21 @@ export const SignupBox = () => {
                             'Sign up'
                         )}
                     </button>
-                    <h4> Single Sign-On </h4>
-                    <button
-                        onClick={redirectToX}
-                        className="bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
-                    >
-                        <FaXTwitter />
-                        <span className="text-white">Sign up with X</span>
-                    </button>
-                    <button
-                        onClick={onSiweSignupClick}
-                    >
-                        <FaEthereum />
-                        <span className="text-white">Sign up with Ethereum</span>
-                    </button>
-                    {siweNonce && (
-                        <div className="text-sm text-gray-500">
-                            Nonce: {siweNonce}
-                        </div>
-                    )}
-                </div>
+                    <div className="flex gap-4 grow self-stretch">
+                        <button
+                            onClick={redirectToX}
+                            className="grow bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
+                        >
+                            <FaXTwitter />
+                        </button>
+                        <button
+                            onClick={onSiweSignupClick}
+                            className="grow bg-[#627EEA] text-lg border-[#627EEA] self-stretch gap-4 items-center flex"
+                        >
+                            <FaEthereum />
+                        </button>
+                    </div>
+                </>
             )}
             {signupStage === 'code' && (
                 <div className={boxClass}>

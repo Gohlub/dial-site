@@ -81,7 +81,8 @@ export interface DialSiteStore {
     verifyEmail: (email: string, hash: string, code: string) => Promise<boolean>
     siweNonce: string
     setSiweNonce: (nonce: string) => void
-    getSiweNonce: () => Promise<void>
+    getSiweNonce: () => Promise<string>
+    registerSiwe: (address: string, signature: string) => Promise<{ jwt: string } | null>
 }
 
 const useDialSiteStore = create<DialSiteStore>()(
@@ -136,7 +137,19 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (shouldReturn) {
                     return returnValue
                 }
-                get().setSiweNonce(result.data)
+                get().setSiweNonce(result.data.nonce)
+                return result.data.nonce
+            },
+            registerSiwe: async (message: string, signature: string) => {
+                const result = await middleware(
+                    axios.post(`/api/siwe/regin`, { message, signature }, { headers: { client_id: 2 } })
+                )
+                const { shouldReturn, returnValue } = handleMaintenanceState(result, get())
+                if (shouldReturn) {
+                    console.log({ registerSiwe: returnValue })
+                    return returnValue
+                }
+                return result.data
             },
             registerEmail: async (email: string, hash: string) => {
                 const { setAlerts } = get()
@@ -347,9 +360,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                 }
                 if (
                     result.data &&
-                    Array.isArray(result.data)
+                    Array.isArray(result.data.nodes)
                 ) {
-                    set({ userNodes: result.data })
+                    set({ userNodes: result.data.nodes })
                 } else if (!existingTimeout) {
                     const timeout = setTimeout(() => {
                         get().getUserNodes(timeout)
