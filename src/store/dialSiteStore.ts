@@ -718,7 +718,7 @@ const handleMaintenanceState = (
 
     setServerIsUnderMaintenance(false);
     setExpectedAvailabilityDate(null);
-    return { shouldReturn: false };
+    return { shouldReturn: false, returnValue: result.data };
 };
 
 export default useDialSiteStore

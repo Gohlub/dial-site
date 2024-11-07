@@ -6,7 +6,7 @@ export interface UserNode {
     last_restarted: string
     link: string
     maintenance_window: string
-    payment_status: string
+    payment_status?: string
     product_description: string
     product_id: number
     product_title: string

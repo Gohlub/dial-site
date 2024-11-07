@@ -43,20 +43,12 @@ export const Home = () => {
     const [userToken, setUserToken] = useState<string | null>(null)
 
     useEffect(() => {
-        // console.log('searchParams', searchParams)
         const xTokenQueryParam = searchParams.get('x')
-        const siweTokenQueryParam = searchParams.get('siwe')
-        // console.log({ xTokenQueryParam, siweTokenQueryParam })
         if (xTokenQueryParam && xTokenQueryParam !== xToken) {
             setLoginMode(LoginMode.X)
             setXToken(xTokenQueryParam)
             setEmailToken('')
             setSiweToken('')
-        } else if (siweTokenQueryParam && siweTokenQueryParam !== siweToken) {
-            setLoginMode(LoginMode.SIWE)
-            setSiweToken(siweTokenQueryParam)
-            setXToken('')
-            setEmailToken('')
         }
     }, [searchParams])
 
