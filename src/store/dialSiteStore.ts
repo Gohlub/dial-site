@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import axios, { AxiosResponse } from 'axios'
+import axios from 'axios'
 import { UserInfo, isUserInfoValid } from '../types/UserInfo'
 import { UserNode } from '../types/UserNode'
 import { middleware, MiddlewareResult } from '../utilities/middleware'
@@ -15,6 +15,14 @@ export enum LoginMode {
     X,
     SIWE,
 };
+
+interface WhitelistedUser {
+    userId: string
+    identifier: string
+    modality: 'email' | 'phone'
+    remainingKinodes: number
+    remainingTrial: boolean
+}
 
 export interface DialSiteStore {
     emailToken: string
@@ -83,6 +91,23 @@ export interface DialSiteStore {
     setSiweNonce: (nonce: string) => void
     getSiweNonce: () => Promise<string>
     registerSiwe: (address: string, signature: string) => Promise<{ jwt: string } | null>
+    addWhitelistedUser: (user: {
+        modality: 'email' | 'phone',
+        identifier: string,
+        remainingKinodes: number,
+        remainingTrial: boolean
+    }) => Promise<boolean>
+    editWhitelistedIdentifier: (userId: string, identifier: string) => Promise<boolean>
+    editRemainingKinodes: (userId: string, remainingKinodes: number) => Promise<boolean>
+    editRemainingTrial: (userId: string, remainingTrial: boolean) => Promise<boolean>
+    deleteWhitelistedUser: (userId: string) => Promise<boolean>
+    operatorToken: string
+    setOperatorToken: (token: string) => void
+    getOperatorToken: () => string | null
+    operatorLogout: () => void
+    searchActiveUser: (identifier: string) => Promise<UserInfo[]>
+    searchWhitelistedUser: (identifier: string) => Promise<UserInfo[]>
+    searchUserById: (userId: string) => Promise<UserInfo | null>
 }
 
 const useDialSiteStore = create<DialSiteStore>()(
@@ -696,10 +721,184 @@ const useDialSiteStore = create<DialSiteStore>()(
                 }
                 return { success: true, error: false }
             },
+            addWhitelistedUser: async (user) => {
+                const { operatorToken, addClientAlert } = get()
+                if (!operatorToken) return false
+
+                const result = await middleware(
+                    axios.post('/api/operator/add-whitelisted-user', user, {
+                        headers: {
+                            Authorization: `Bearer ${operatorToken}`,
+                            'Content-Type': 'application/json',
+                            client_id: 2
+                        }
+                    })
+                )
+
+                if (result.error) {
+                    addClientAlert(result.message || 'Failed to add user')
+                    return false
+                }
+                return true
+            },
+            editWhitelistedIdentifier: async (userId, identifier) => {
+                const { operatorToken, addClientAlert } = get()
+                if (!operatorToken) return false
+
+                const result = await middleware(
+                    axios.put(`/api/operator/edit-whitelisted-identifier/${userId}`, {
+                        identifier
+                    }, {
+                        headers: {
+                            Authorization: `Bearer ${operatorToken}`,
+                            'Content-Type': 'application/json',
+                            client_id: 2
+                        }
+                    })
+                )
+
+                if (result.error) {
+                    addClientAlert(result.message || 'Failed to update identifier')
+                    return false
+                }
+                return true
+            },
+            editRemainingKinodes: async (userId, remainingKinodes) => {
+                const { operatorToken, addClientAlert } = get()
+                if (!operatorToken) return false
+
+                const result = await middleware(
+                    axios.put(`/api/operator/edit-remaining-kinodes/${userId}`, {
+                        remainingKinodes
+                    }, {
+                        headers: {
+                            Authorization: `Bearer ${operatorToken}`,
+                            'Content-Type': 'application/json',
+                            client_id: 2
+                        }
+                    })
+                )
+
+                if (result.error) {
+                    addClientAlert(result.message || 'Failed to update remaining kinodes')
+                    return false
+                }
+                return true
+            },
+            editRemainingTrial: async (userId, remainingTrial) => {
+                const { operatorToken, addClientAlert } = get()
+                if (!operatorToken) return false
+
+                const result = await middleware(
+                    axios.put(`/api/operator/edit-remaining-trial/${userId}`, {
+                        remainingTrial
+                    }, {
+                        headers: {
+                            Authorization: `Bearer ${operatorToken}`,
+                            'Content-Type': 'application/json',
+                            client_id: 2
+                        }
+                    })
+                )
+
+                if (result.error) {
+                    addClientAlert(result.message || 'Failed to update trial status')
+                    return false
+                }
+                return true
+            },
+            deleteWhitelistedUser: async (userId) => {
+                const { operatorToken, addClientAlert } = get()
+                if (!operatorToken) return false
+
+                const result = await middleware(
+                    axios.delete(`/api/operator/delete-whitelisted-user/${userId}`, {
+                        headers: {
+                            Authorization: `Bearer ${operatorToken}`,
+                            'Content-Type': 'application/json',
+                            client_id: 2
+                        }
+                    })
+                )
+
+                if (result.error) {
+                    addClientAlert(result.message || 'Failed to delete user')
+                    return false
+                }
+                return true
+            },
+            operatorToken: '',
+            setOperatorToken: (token: string) => set({ operatorToken: token }),
+            getOperatorToken: () => get().operatorToken,
+            operatorLogout: () => {
+                set({ operatorToken: '' })
+            },
+            searchActiveUser: async (identifier: string) => {
+                const { operatorToken, addClientAlert } = get()
+                if (!operatorToken) return []
+
+                const result = await middleware(
+                    axios.get(`/api/operator/active-user/${identifier}`, {
+                        headers: {
+                            Authorization: `Bearer ${operatorToken}`,
+                            'Content-Type': 'application/json',
+                            client_id: 2
+                        }
+                    })
+                )
+
+                if (result.error) {
+                    addClientAlert(result.message || 'Failed to fetch active users')
+                    return []
+                }
+                return result.data || []
+            },
+
+            searchWhitelistedUser: async (identifier: string) => {
+                const { operatorToken, addClientAlert } = get()
+                if (!operatorToken) return []
+
+                const result = await middleware(
+                    axios.get(`/api/operator/whitelisted-user/${identifier}`, {
+                        headers: {
+                            Authorization: `Bearer ${operatorToken}`,
+                            'Content-Type': 'application/json',
+                            client_id: 2
+                        }
+                    })
+                )
+
+                if (result.error) {
+                    addClientAlert(result.message || 'Failed to fetch whitelisted users')
+                    return []
+                }
+                return result.data || []
+            },
+
+            searchUserById: async (userId: string) => {
+                const { operatorToken, addClientAlert } = get()
+                if (!operatorToken) return null
+
+                const result = await middleware(
+                    axios.get(`/api/operator/active-user-by-id/${userId}`, {
+                        headers: {
+                            Authorization: `Bearer ${operatorToken}`,
+                            'Content-Type': 'application/json',
+                            client_id: 2
+                        }
+                    })
+                )
+
+                if (result.error) {
+                    addClientAlert(result.message || 'Failed to fetch user by ID')
+                    return null
+                }
+                return result.data
+            }
         }),
         {
-            name: 'dial-site', // unique name
-            storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
+            name: 'dial-site',
+            storage: createJSONStorage(() => sessionStorage),
         },
     ),
 )
