@@ -4,10 +4,12 @@ export default function StagedLoadingOverlay({
     stages,
     currentStage,
     finalStage,
+    emergencyButton,
 }: {
     stages: Record<string, string>
     currentStage: string
     finalStage: string
+    emergencyButton?: React.ReactNode
 }) {
     if (!currentStage) return null
 
@@ -35,6 +37,7 @@ export default function StagedLoadingOverlay({
                         }}
                     ></div>
                 </div>
+                {emergencyButton}
             </div>
         </div>
     )

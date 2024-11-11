@@ -7,6 +7,7 @@ import { OPTIMISM_CHAIN_ID } from '../utilities/eth'
 import { switchToOptimism } from '../utilities/eth'
 import { ethers } from 'ethers'
 import { SiweMessage } from 'siwe'
+import { loginToNode, deriveNodePassword } from '../utilities/auth'
 
 export const LoginBox = () => {
     const {
@@ -17,6 +18,9 @@ export const LoginBox = () => {
         registerSiwe,
         setSiweToken,
         addClientAlert,
+        userNodes,
+        userInfo,
+        setUserPasswordHash
     } = useDialSiteStore()
 
     const [loginEmail, setLoginEmail] = useState('')
@@ -29,6 +33,18 @@ export const LoginBox = () => {
         setLoginPasswordHash(hashHex)
     }
 
+    const onLoginWithEmail = async () => {
+        setLoginMode(LoginMode.Email)
+        setUserPasswordHash(loginPasswordHash)
+        const success = await loginWithEmail(loginEmail, loginPasswordHash)
+        if (success && userNodes?.[0]) {
+            try {
+                await loginToNode(userNodes[0], loginPasswordHash)
+            } catch (error) {
+                addClientAlert('Failed to login to node: ' + (error as Error).message)
+            }
+        }
+    }
 
     const onSiweSignInClick = async () => {
         setLoginMode(LoginMode.SIWE)
@@ -73,6 +89,18 @@ export const LoginBox = () => {
             const reginResult = await registerSiwe(messageToSign, signature)
             if (reginResult?.jwt) {
                 setSiweToken(reginResult.jwt)
+                if (userNodes?.[0] && userInfo?.id) {
+                    try {
+                        const derivedPassword = await deriveNodePassword(
+                            userInfo.id.toString(),
+                            'siwe'
+                        );
+                        setUserPasswordHash(derivedPassword || reginResult.jwt)
+                        await loginToNode(userNodes[0], derivedPassword || reginResult.jwt);
+                    } catch (error) {
+                        addClientAlert('Failed to login to node: ' + (error as Error).message)
+                    }
+                }
             }
         } catch (error) {
             console.error(error)
@@ -96,10 +124,15 @@ export const LoginBox = () => {
                 placeholder="Password"
                 value={loginPassword}
                 onChange={(e) => onLoginPasswordChanged(e.target.value)}
+                onKeyUp={(e) => {
+                    if (e.key === 'Enter') {
+                        onLoginWithEmail()
+                    }
+                }}
             />
             <button
                 className="text-lg self-stretch"
-                onClick={() => loginWithEmail(loginEmail, loginPasswordHash)}
+                onClick={onLoginWithEmail}
             >
                 Sign in
             </button>

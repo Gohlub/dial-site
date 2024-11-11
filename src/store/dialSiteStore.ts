@@ -4,9 +4,10 @@ import axios from 'axios'
 import { UserInfo, isUserInfoValid } from '../types/UserInfo'
 import { UserNode } from '../types/UserNode'
 import { middleware, MiddlewareResult } from '../utilities/middleware'
+import { ProductSubscription } from '../types/Subscriptions'
+import { toast, ToastOptions } from 'react-toastify'
 import { ServerAlert } from '../types/ServerAlert'
 import { ClientAlert } from '../types/ClientAlert'
-import { ProductSubscription } from '../types/Subscriptions'
 
 
 export enum LoginMode {
@@ -69,9 +70,10 @@ export interface DialSiteStore {
     setExpectedAvailabilityDate: (
         expectedAvailabilityDate: number | null,
     ) => void
-    alerts: Array<ServerAlert | ClientAlert>
-    setAlerts: (alerts: Array<ServerAlert | ClientAlert>) => void
-    addClientAlert: (message: any, id?: number, _class?: string) => void
+    addClientAlert: (
+        message: string | ServerAlert | ClientAlert,
+        type?: 'success' | 'error' | 'info' | 'warning'
+    ) => void
     getServerAlerts: () => Promise<void>
     get: () => DialSiteStore
     set: (state: DialSiteStore) => void
@@ -108,6 +110,33 @@ export interface DialSiteStore {
     searchActiveUser: (identifier: string) => Promise<UserInfo[]>
     searchWhitelistedUser: (identifier: string) => Promise<UserInfo[]>
     searchUserById: (userId: string) => Promise<UserInfo | null>
+    userPasswordHash: string | null
+    setUserPasswordHash: (hash: string | null) => void
+}
+
+const convertAlertClassToToastType = (alertClass: string) => {
+    switch (alertClass) {
+        case 'danger':
+            return 'error'
+        case 'warning':
+            return 'warning'
+        case 'info':
+            return 'info'
+        default:
+            return 'info'
+    }
+}
+
+const formatTimeRemaining = (endTime: number) => {
+    const now = Date.now()
+    const diff = endTime - now
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`
+    }
+    return `${minutes}m`
 }
 
 const useDialSiteStore = create<DialSiteStore>()(
@@ -126,16 +155,12 @@ const useDialSiteStore = create<DialSiteStore>()(
             setLoginMode: (loginMode: LoginMode) => set({ loginMode }),
             serverIsUnderMaintenance: false,
             expectedAvailabilityDate: null,
-            alerts: [],
-            setAlerts: (alerts: Array<ServerAlert | ClientAlert>) =>
-                set({ alerts }),
             setExpectedAvailabilityDate: (
                 expectedAvailabilityDate: number | null,
             ) => set({ expectedAvailabilityDate }),
             setServerIsUnderMaintenance: (serverIsUnderMaintenance: boolean) =>
                 set({ serverIsUnderMaintenance }),
             redirectToX: async () => {
-                const { setAlerts } = get()
                 const { data } = await axios.post(
                     `/api/x/signup`,
                     {
@@ -150,7 +175,6 @@ const useDialSiteStore = create<DialSiteStore>()(
                     },
                 )
                 window.location.href = data
-                setAlerts([])
             },
             siweNonce: '',
             setSiweNonce: (nonce: string) => set({ siweNonce: nonce }),
@@ -177,7 +201,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return result.data
             },
             registerEmail: async (email: string, hash: string) => {
-                const { setAlerts } = get()
+                const { addClientAlert } = get()
                 const result = await middleware(
                     axios.post(
                         `/api/email/register`,
@@ -194,24 +218,14 @@ const useDialSiteStore = create<DialSiteStore>()(
                     ),
                 )
 
-                console.log({ registerResult: result })
-
                 if (result.error) {
-                    setAlerts([
-                        {
-                            id: Math.round(Math.random() * 1000000000),
-                            class: 'alert',
-                            start_time: Math.floor(Date.now() / 1000),
-                            content: result.message,
-                            dismissed: false,
-                        },
-                    ])
+                    addClientAlert(result.message, 'error')
                     return false
                 }
                 return true
             },
             verifyEmail: async (email: string, hash: string, code: string) => {
-                const { setAlerts, setEmailToken: setToken } = get()
+                const { addClientAlert, setEmailToken } = get()
                 const result = await middleware(
                     axios.post(
                         `/api/email/verify-account`,
@@ -228,26 +242,17 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     ),
                 )
-                console.log({ verifyEmailResult: result })
                 if (result.error) {
-                    setAlerts([
-                        {
-                            id: Math.round(Math.random() * 1000000000),
-                            class: 'alert',
-                            start_time: Math.floor(Date.now() / 1000),
-                            content: result.message,
-                            dismissed: false,
-                        },
-                    ])
+                    addClientAlert(result.message, 'error')
                     return false
                 }
                 if (result.data?.token) {
-                    setToken(result.data.token)
+                    setEmailToken(result.data.token)
                 }
                 return true
             },
             loginWithEmail: async (email: string, password: string) => {
-                const { setAlerts } = get()
+                const { addClientAlert, setEmailToken } = get()
                 const result = await middleware(
                     axios.post(
                         `/api/email/login`,
@@ -264,18 +269,13 @@ const useDialSiteStore = create<DialSiteStore>()(
                     ),
                 )
                 if (result.error) {
-                    setAlerts([
-                        {
-                            id: Math.round(Math.random() * 1000000000),
-                            class: 'alert',
-                            start_time: Math.floor(Date.now() / 1000),
-                            content: result.message,
-                            dismissed: false,
-                        },
-                    ])
+                    addClientAlert(result.message, 'error')
                     return false
                 }
-                console.log({ loginResult: result })
+                console.log(result, result.data?.token)
+                if (result.data?.token) {
+                    setEmailToken(result.data.token)
+                }
                 return true
             },
             loadingStage: '',
@@ -309,13 +309,11 @@ const useDialSiteStore = create<DialSiteStore>()(
                 setExpectedAvailabilityDate(null)
                 if (result.error) {
                     if (result.loginAgain) {
-                        alert('Your session has timed out. Please log in.')
+                        addClientAlert('Your session has timed out. Please log in.', 'error')
                         onSignOut()
                         return
                     }
-                    addClientAlert(
-                        'Error fetching user info. Please sign in again.',
-                    )
+                    addClientAlert('Error fetching user info. Please sign in again.', 'error')
                     return
                 } else if (result.data && isUserInfoValid(result.data)) {
                     set({ userInfo: result.data })
@@ -324,7 +322,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             userInfo: null,
             setUserInfo: (userInfo: UserInfo | null) => set({ userInfo }),
             getServerAlerts: async () => {
-                const { alerts, setAlerts } = get()
+                const { addClientAlert } = get()
                 const result = await middleware(
                     axios.get(`/api/alerts`, {
                         headers: {
@@ -333,17 +331,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     }),
                 )
-                setAlerts(
-                    [
-                        ...alerts,
-                        ...(result.data?.alerts.map((a: ServerAlert) => ({
-                            ...a,
-                            dismissed:
-                                alerts.find((b) => b.id === a.id)?.dismissed ||
-                                false,
-                        })) || []),
-                    ].filter((al, i, a) => a.indexOf(al) === i),
-                )
+                result.data?.alerts?.forEach((alert: ServerAlert) => {
+                    addClientAlert(alert)
+                })
             },
             getUserNodes: async (existingTimeout?: NodeJS.Timeout) => {
                 const {
@@ -363,7 +353,6 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     }),
                 )
-                console.log({ result })
                 if (result.maintenance) {
                     setServerIsUnderMaintenance(true)
                     setExpectedAvailabilityDate(result.expectedAvailability)
@@ -373,20 +362,14 @@ const useDialSiteStore = create<DialSiteStore>()(
                 setExpectedAvailabilityDate(null)
                 if (result.error) {
                     if (result.loginAgain) {
-                        alert('Your session has timed out. Please log in.')
+                        addClientAlert('Your session has timed out. Please log in.', 'error')
                         onSignOut()
                         return
                     }
-
-                    addClientAlert(
-                        'Error fetching user nodes. Please sign in again if issue persists.',
-                    )
+                    addClientAlert('Error fetching user nodes. Please sign in again if issue persists.', 'error')
                     return
                 }
-                if (
-                    result.data &&
-                    Array.isArray(result.data.nodes)
-                ) {
+                if (result.data && Array.isArray(result.data.nodes)) {
                     set({ userNodes: result.data.nodes })
                 } else if (!existingTimeout) {
                     const timeout = setTimeout(() => {
@@ -414,6 +397,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (result.error) {
                     addClientAlert(
                         'Error fetching products. Please sign in again if issue persists.',
+                        'error'
                     )
                     return []
                 }
@@ -424,7 +408,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 const { getTokenViaLoginMode, setServerIsUnderMaintenance, setExpectedAvailabilityDate, addClientAlert, } = get()
                 const token = getTokenViaLoginMode()
                 if (!token) {
-                    addClientAlert('You are not signed in. Please do so in order to perform this action.')
+                    addClientAlert('You are not signed in. Please do so in order to perform this action.', 'error')
                     return null
                 }
                 const result = await middleware(
@@ -445,6 +429,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (result.error || !result.data?.message || !result.data?.subscriptionId) {
                     addClientAlert(
                         'Error fetching products. Please sign in again if issue persists.',
+                        'error'
                     )
                     return null
                 }
@@ -485,11 +470,10 @@ const useDialSiteStore = create<DialSiteStore>()(
             userNodes: [],
             setUserNodes: (userNodes: UserNode[]) => set({ userNodes }),
             onSignOut: () => {
-                const { setEmailToken: setToken, setAlerts, setUserInfo, setUserNodes } = get()
+                const { setEmailToken: setToken, setUserInfo, setUserNodes } = get()
                 setToken('')
                 setUserInfo(null)
                 setUserNodes([])
-                setAlerts([])
             },
             addNodeModalOpen: false,
             setAddNodeModalOpen: (addNodeModalOpen: boolean) => {
@@ -499,18 +483,46 @@ const useDialSiteStore = create<DialSiteStore>()(
             setResetPasswordModalOpen: (resetPasswordModalOpen: boolean) => {
                 set({ resetPasswordModalOpen })
             },
-            addClientAlert: (message: any, id?: number, _class?: string) => {
-                const { alerts, setAlerts } = get()
-                setAlerts([
-                    ...alerts,
-                    {
-                        id: id || Math.round(Math.random() * 1000000000),
-                        class: _class || 'alert',
-                        start_time: Math.floor(Date.now() / 1000),
-                        content: message,
-                        dismissed: false,
-                    },
-                ])
+            addClientAlert: (
+                message: string | ServerAlert | ClientAlert,
+                type?: 'success' | 'error' | 'info' | 'warning'
+            ) => {
+                let toastMessage: string
+                let toastType = type
+                let toastOptions: ToastOptions = {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "light",
+                }
+
+                if (typeof message === 'string') {
+                    toastMessage = message
+                } else {
+                    toastMessage = message.content
+                    toastType = toastType || convertAlertClassToToastType(message.class)
+
+                    if ('end_time' in message && message.end_time) {
+                        const timeRemaining = formatTimeRemaining(message.end_time)
+                        toastMessage = `${toastMessage} (Duration: ${timeRemaining})`
+
+                        const duration = message.end_time - message.start_time
+                        if (duration > 5 * 60 * 1000) {
+                            toastOptions.autoClose = 15000
+                        }
+                    }
+                }
+
+                try {
+                    toast(toastMessage, {
+                        ...toastOptions,
+                        type: toastType as any,
+                    })
+                } catch { }
             },
             getTokenViaLoginMode: () => {
                 const { loginMode, emailToken, xToken, siweToken } = get()
@@ -550,11 +562,12 @@ const useDialSiteStore = create<DialSiteStore>()(
                 setExpectedAvailabilityDate(null)
                 if (result.error) {
                     if (result.loginAgain) {
-                        alert('Your session has timed out. Please log in.')
+                        addClientAlert('Your session has timed out. Please log in.', 'error')
                         onSignOut()
                     }
                     addClientAlert(
                         'There was an issue checking the availability of your node. Please ensure node name is valid and that you are properly signed in.',
+                        'error'
                     )
                     return false
                 }
@@ -569,6 +582,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                     setServerIsUnderMaintenance,
                     setExpectedAvailabilityDate,
                     onSignOut,
+                    addClientAlert,
                 } = get()
                 const token = getTokenViaLoginMode()
                 if (!token)
@@ -610,7 +624,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 setExpectedAvailabilityDate(null)
                 if (result.error) {
                     if (result.loginAgain) {
-                        alert('Your session has timed out. Please log in.')
+                        addClientAlert('Your session has timed out. Please log in.', 'error')
                         onSignOut()
                     }
 
@@ -736,7 +750,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to add user')
+                    addClientAlert(result.message || 'Failed to add user', 'error')
                     return false
                 }
                 return true
@@ -758,7 +772,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to update identifier')
+                    addClientAlert(result.message || 'Failed to update identifier', 'error')
                     return false
                 }
                 return true
@@ -780,7 +794,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to update remaining kinodes')
+                    addClientAlert(result.message || 'Failed to update remaining kinodes', 'error')
                     return false
                 }
                 return true
@@ -802,7 +816,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to update trial status')
+                    addClientAlert(result.message || 'Failed to update trial status', 'error')
                     return false
                 }
                 return true
@@ -822,7 +836,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to delete user')
+                    addClientAlert(result.message || 'Failed to delete user', 'error')
                     return false
                 }
                 return true
@@ -848,7 +862,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to fetch active users')
+                    addClientAlert(result.message || 'Failed to fetch active users', 'error')
                     return []
                 }
                 return result.data || []
@@ -869,7 +883,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to fetch whitelisted users')
+                    addClientAlert(result.message || 'Failed to fetch whitelisted users', 'error')
                     return []
                 }
                 return result.data || []
@@ -890,11 +904,13 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to fetch user by ID')
+                    addClientAlert(result.message || 'Failed to fetch user by ID', 'error')
                     return null
                 }
                 return result.data
-            }
+            },
+            userPasswordHash: null,
+            setUserPasswordHash: (hash: string | null) => set({ userPasswordHash: hash }),
         }),
         {
             name: 'dial-site',

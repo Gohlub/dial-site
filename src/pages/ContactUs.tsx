@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import NavBar from '../components/NavBar'
 
 const NotWhitelisted = () => {
-    const { submitContactRequest } = useDialSiteStore()
+    const { submitContactRequest, addClientAlert } = useDialSiteStore()
     const navigate = useNavigate()
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
@@ -12,10 +12,10 @@ const NotWhitelisted = () => {
     const onSubmit = async () => {
         const result = await submitContactRequest(name, email, msg)
         if (result.success) {
-            alert('Your message has been sent. We will get back to you soon.')
+            addClientAlert('Your message has been sent. We will get back to you soon.', 'success')
             navigate('/')
         } else {
-            alert(result.error)
+            addClientAlert(result.error as string, 'error')
         }
     }
     return (

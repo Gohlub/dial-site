@@ -2,6 +2,7 @@ import { useState, FormEvent, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import useDialSiteStore from '../store/dialSiteStore'
+import { sha256 } from '../utilities/hash'
 
 const OperatorLogin = () => {
     const { operatorToken, setOperatorToken } = useDialSiteStore(state => ({
@@ -20,13 +21,12 @@ const OperatorLogin = () => {
         try {
             const response = await axios.post('/api/operator/login', {
                 email,
-                password
+                password: '0x' + (await sha256(password))
             })
 
             if (response.status === 200) {
                 // Store the token in localStorage
                 setOperatorToken(response.data.token)
-                navigate('/operator-dashboard')
             }
         } catch (error) {
             setError('Invalid credentials. Please try again.')
@@ -38,9 +38,9 @@ const OperatorLogin = () => {
         if (operatorToken) {
             navigate('/operator-dashboard')
         }
-    })
+    }, [operatorToken])
 
-    return (
+    return (operatorToken ? null :
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
                 <h2 className="text-center text-3xl font-extrabold text-gray-900">

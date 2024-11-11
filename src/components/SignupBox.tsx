@@ -10,6 +10,7 @@ import StagedLoadingOverlay from './StagedLoadingOverlay'
 import { SiweMessage } from 'siwe'
 import { ethers } from 'ethers'
 import { OPTIMISM_CHAIN_ID, switchToOptimism } from '../utilities/eth'
+import { loginToNode } from '../utilities/auth'
 
 export const SignupBox = () => {
     const {
@@ -36,6 +37,8 @@ export const SignupBox = () => {
         getTokenViaLoginMode,
         registerSiwe,
         siweToken,
+        setUserPasswordHash,
+        userPasswordHash,
     } = useDialSiteStore()
     const [loading, setLoading] = useState(false)
     const [signupStage, setSignupStage] = useState<
@@ -112,6 +115,7 @@ export const SignupBox = () => {
         )
         setLoading(false)
         if (result) {
+            setLoginMode(LoginMode.Email)
             setSignupStage('code')
             return
         }
@@ -122,6 +126,7 @@ export const SignupBox = () => {
 
     const onVerify = async () => {
         setLoading(true)
+        setLoginMode(LoginMode.Email)
         const result = await verifyEmail(
             signupEmail,
             signupPasswordHash,
@@ -248,8 +253,9 @@ export const SignupBox = () => {
 
     const onBootNode = async () => {
         if (loginMode === LoginMode.Email && (signupPassword.length < 8 || signupPasswordHash !== signupConfirmPasswordHash)) {
-            alert(
+            addClientAlert(
                 'Password must be at least 8 characters long, and passwords must match.',
+                'error',
             )
             return false
         }
@@ -257,9 +263,16 @@ export const SignupBox = () => {
         const { success, error } = await bootNode(signupNodeName, signupPasswordHash)
         if (success) {
             setLoadingStage('preload')
-            getUserNodes()
+            await getUserNodes()
+            if (userNodes?.[0]) {
+                try {
+                    await loginToNode(userNodes[0], signupPasswordHash)
+                } catch (error) {
+                    addClientAlert(`Node created but login failed: ${error}. Please try logging in manually.`, 'error')
+                }
+            }
         } else {
-            alert(`Something went wrong: ${error}. Please try again.`)
+            addClientAlert(`Something went wrong: ${error}. Please try again.`, 'error')
             return false
         }
         setLoading(false)
@@ -310,6 +323,12 @@ export const SignupBox = () => {
         setLoading(false)
     }
 
+    useEffect(() => {
+        if (signupPasswordHash) {
+            setUserPasswordHash(signupPasswordHash)
+        }
+    }, [signupPasswordHash])
+
     const isMobile = useIsMobile()
     const boxClass = classNames('flex flex-col gap-2 place-items-center rounded-xl bg-white/75 shadow-xl backdrop-blur-lg p-4 w-screen', {
         'max-w-[600px]': !isMobile,
@@ -321,7 +340,7 @@ export const SignupBox = () => {
         })}>
             {loginMode !== LoginMode.None && (
                 <div className={classNames("text-white text-xl flex items-center gap-2 rounded-xl p-4", {
-                    'bg-white/10': loginMode === LoginMode.Email,
+                    'bg-orange': loginMode === LoginMode.Email,
                     'bg-blue-500': loginMode === LoginMode.X,
                     'bg-[#627EEA]': loginMode === LoginMode.SIWE,
                 })}>
