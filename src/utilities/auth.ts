@@ -35,7 +35,7 @@ export async function deriveNodePassword(
 }
 
 export const loginToNode = async (node: UserNode, passwordHash: string) => {
-    const { addClientAlert } = useDialSiteStore.getState()
+    const { addClientAlert, setLoadingStage } = useDialSiteStore.getState()
     if (!passwordHash.startsWith('0x')) {
         passwordHash = '0x' + passwordHash
     }
@@ -43,6 +43,7 @@ export const loginToNode = async (node: UserNode, passwordHash: string) => {
     if (node.ship_status !== 'active') {
         const errorMsg = `Cannot login: node status is ${node.ship_status}`
         addClientAlert(errorMsg)
+        setLoadingStage()
         throw new Error(errorMsg)
     }
 
@@ -62,6 +63,7 @@ export const loginToNode = async (node: UserNode, passwordHash: string) => {
         });
 
         if (response.status >= 400) {
+            setLoadingStage()
             throw new Error('Login failed');
         }
 
@@ -97,12 +99,14 @@ export const loginToNode = async (node: UserNode, passwordHash: string) => {
                 window.location.href = data.redirectUrl;
             } catch (error) {
                 console.error('Navigation failed:', error);
+                setLoadingStage()
                 addClientAlert('Failed to access node');
                 throw error;
             }
         }
     } catch (error) {
         console.error('Failed to login to node:', error);
+        setLoadingStage()
         addClientAlert(`Failed to login to node: ${(error as Error).message}`)
         throw error;
     }

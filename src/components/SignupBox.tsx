@@ -37,7 +37,9 @@ export const SignupBox = () => {
         getTokenViaLoginMode,
         registerSiwe,
         siweToken,
+        emailToken,
         setUserPasswordHash,
+        userPasswordHash,
     } = useDialSiteStore()
     const [loading, setLoading] = useState(false)
     const [signupStage, setSignupStage] = useState<
@@ -190,26 +192,27 @@ export const SignupBox = () => {
     }
 
     useEffect(() => {
-        if (signupStage === 'credentials' && loginMode === LoginMode.X) {
-            setSignupStage('node-name')
-            if (!signupPasswordHash) {
-                const token = getTokenViaLoginMode()
-                if (token) {
-                    sha256(token).then(hashHex => {
+        if (signupStage === 'credentials') {
+            if (loginMode === LoginMode.X && userNodes.length === 0) {
+                setSignupStage('node-name')
+                if (!signupPasswordHash) {
+                    const token = getTokenViaLoginMode()
+                    if (token) {
+                        sha256(token).then(hashHex => {
+                            setSignupPasswordHash(hashHex)
+                        })
+                    }
+                }
+            } else if (loginMode === LoginMode.SIWE && siweToken && userNodes.length === 0) {
+                setSignupStage('node-name')
+                if (!signupPasswordHash) {
+                    sha256(siweToken).then(hashHex => {
                         setSignupPasswordHash(hashHex)
                     })
                 }
-            }
-        }
-    }, [loginMode])
-
-    useEffect(() => {
-        if (signupStage === 'credentials' && loginMode === LoginMode.SIWE && siweToken) {
-            setSignupStage('node-name')
-            if (!signupPasswordHash) {
-                sha256(siweToken).then(hashHex => {
-                    setSignupPasswordHash(hashHex)
-                })
+            } else if (loginMode === LoginMode.Email && emailToken && userNodes.length === 0) {
+                setSignupStage('node-name')
+                setLoadingStage()
             }
         }
     }, [loginMode, signupStage, siweToken])
@@ -323,7 +326,7 @@ export const SignupBox = () => {
     }
 
     useEffect(() => {
-        if (signupPasswordHash) {
+        if (signupPasswordHash && signupPasswordHash !== userPasswordHash) {
             setUserPasswordHash(signupPasswordHash)
         }
     }, [signupPasswordHash])

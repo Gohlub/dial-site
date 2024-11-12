@@ -20,7 +20,8 @@ export const LoginBox = () => {
         addClientAlert,
         userNodes,
         userInfo,
-        setUserPasswordHash
+        setUserPasswordHash,
+        setLoadingStage,
     } = useDialSiteStore()
 
     const [loginEmail, setLoginEmail] = useState('')
@@ -36,6 +37,7 @@ export const LoginBox = () => {
     const onLoginWithEmail = async () => {
         setLoginMode(LoginMode.Email)
         setUserPasswordHash(loginPasswordHash)
+        setLoadingStage('kinode')
         const success = await loginWithEmail(loginEmail, loginPasswordHash)
         if (success && userNodes?.[0]) {
             try {

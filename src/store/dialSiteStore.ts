@@ -308,7 +308,12 @@ const useDialSiteStore = create<DialSiteStore>()(
                 }
             },
             userInfo: null,
-            setUserInfo: (userInfo: UserInfo | null) => set({ userInfo }),
+            setUserInfo: (userInfo: UserInfo | null) => {
+                const current = get().userInfo
+                if (JSON.stringify(current) !== JSON.stringify(userInfo)) {
+                    set({ userInfo })
+                }
+            },
             getServerAlerts: async () => {
                 const result = await middleware(
                     axios.get(`/api/alerts`, {
@@ -361,7 +366,8 @@ const useDialSiteStore = create<DialSiteStore>()(
                 }
                 if (
                     result.data &&
-                    Array.isArray(result.data.nodes)
+                    Array.isArray(result.data.nodes) &&
+                    JSON.stringify(get().userNodes) !== JSON.stringify(result.data.nodes)
                 ) {
                     set({ userNodes: result.data.nodes })
                 } else if (!existingTimeout) {
