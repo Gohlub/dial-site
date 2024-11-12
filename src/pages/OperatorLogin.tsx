@@ -35,6 +35,7 @@ const OperatorLogin = () => {
     }
 
     useEffect(() => {
+        console.log('useEffect triggered with operatorToken:', operatorToken)
         if (operatorToken) {
             navigate('/operator-dashboard')
         }

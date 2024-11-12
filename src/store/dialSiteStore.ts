@@ -17,14 +17,6 @@ export enum LoginMode {
     SIWE,
 };
 
-interface WhitelistedUser {
-    userId: string
-    identifier: string
-    modality: 'email' | 'phone'
-    remainingKinodes: number
-    remainingTrial: boolean
-}
-
 export interface DialSiteStore {
     emailToken: string
     setEmailToken: (token: string) => void

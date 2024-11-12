@@ -38,7 +38,6 @@ export const SignupBox = () => {
         registerSiwe,
         siweToken,
         setUserPasswordHash,
-        userPasswordHash,
     } = useDialSiteStore()
     const [loading, setLoading] = useState(false)
     const [signupStage, setSignupStage] = useState<

@@ -1,5 +1,5 @@
 import useDialSiteStore, { LoginMode } from '../store/dialSiteStore'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, } from 'react'
 import dayjs from 'dayjs'
 import NavBar from '../components/NavBar'
 import classNames from 'classnames'
@@ -10,14 +10,13 @@ import StagedLoadingOverlay from '../components/StagedLoadingOverlay'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { useLocation } from 'react-router-dom'
 import { NODE_LOADING_STAGES } from '../types/nodeLoadingStages'
-import { deriveNodePassword, loginToNode } from '../utilities/auth'
+import { deriveNodePassword, } from '../utilities/auth'
 import 'react-toastify/dist/ReactToastify.css'
 dayjs.extend(relativeTime)
 
 export const Home = () => {
     const {
         getServerAlerts,
-        get,
         xToken,
         siweToken,
         emailToken,
@@ -37,7 +36,6 @@ export const Home = () => {
         setLoadingStage,
         addClientAlert,
         userPasswordHash,
-        setUserPasswordHash,
     } = useDialSiteStore()
 
     const location = useLocation()

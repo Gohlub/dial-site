@@ -1,6 +1,6 @@
 import useDialSiteStore, { LoginMode } from '../store/dialSiteStore'
 import { useState } from 'react'
-import { useIsMobile } from '../utilities/dimensions'
+// import { useIsMobile } from '../utilities/dimensions'
 import { sha256 } from '../utilities/hash'
 import { FaEthereum, FaXTwitter } from 'react-icons/fa6'
 import { OPTIMISM_CHAIN_ID } from '../utilities/eth'
@@ -108,7 +108,7 @@ export const LoginBox = () => {
         }
     }
 
-    const isMobile = useIsMobile()
+    // const isMobile = useIsMobile()
 
     return (
         <div className="flex flex-col gap-4 items-center">

@@ -2,7 +2,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import useDialSiteStore from '../store/dialSiteStore'
 import { useEffect } from 'react'
 import NavBar from '../components/NavBar'
-import { Alerts } from '../components/Alerts'
 
 export const ProcessXToken = () => {
     const location = useLocation()
@@ -24,7 +23,9 @@ export const ProcessXToken = () => {
     return (
         <>
             <NavBar />
-            <Alerts />
+            <div className="flex flex-col items-center justify-center h-screen">
+                <h1 className="text-2xl font-bold">Processing X Token...</h1>
+            </div>
         </>
     )
 }
