@@ -64,7 +64,7 @@ export interface DialSiteStore {
     ) => void
     addClientAlert: (
         message: string | ServerAlert | ClientAlert,
-        type?: 'success' | 'error' | 'info' | 'warning'
+        type?: 'success' | 'error' | 'info' | 'warning' | 'danger'
     ) => void
     getServerAlerts: () => Promise<void>
     get: () => DialSiteStore
@@ -277,8 +277,6 @@ const useDialSiteStore = create<DialSiteStore>()(
             getUserInfo: async () => {
                 const {
                     getTokenViaLoginMode,
-                    setServerIsUnderMaintenance,
-                    setExpectedAvailabilityDate,
                     addClientAlert,
                     onSignOut,
                 } = get()
@@ -292,20 +290,18 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     }),
                 )
-                if (result.maintenance) {
-                    setServerIsUnderMaintenance(true)
-                    setExpectedAvailabilityDate(result.expectedAvailability)
-                    return
-                }
-                setServerIsUnderMaintenance(false)
-                setExpectedAvailabilityDate(null)
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return
+
                 if (result.error) {
                     if (result.loginAgain) {
-                        addClientAlert('Your session has timed out. Please log in.', 'error')
+                        alert('Your session has timed out. Please log in.')
                         onSignOut()
                         return
                     }
-                    addClientAlert('Error fetching user info. Please sign in again.', 'error')
+                    addClientAlert(
+                        'Error fetching user info. Please sign in again.',
+                    )
                     return
                 } else if (result.data && isUserInfoValid(result.data)) {
                     set({ userInfo: result.data })
@@ -314,7 +310,6 @@ const useDialSiteStore = create<DialSiteStore>()(
             userInfo: null,
             setUserInfo: (userInfo: UserInfo | null) => set({ userInfo }),
             getServerAlerts: async () => {
-                const { addClientAlert } = get()
                 const result = await middleware(
                     axios.get(`/api/alerts`, {
                         headers: {
@@ -323,15 +318,19 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     }),
                 )
-                result.data?.alerts?.forEach((alert: ServerAlert) => {
-                    addClientAlert(alert)
-                })
+
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return
+
+                if (result.data?.alerts) {
+                    result.data.alerts.forEach((alert: ServerAlert) => {
+                        get().addClientAlert(alert.content, alert.class)
+                    })
+                }
             },
             getUserNodes: async (existingTimeout?: NodeJS.Timeout) => {
                 const {
                     getTokenViaLoginMode,
-                    setServerIsUnderMaintenance,
-                    setExpectedAvailabilityDate,
                     addClientAlert,
                     onSignOut,
                 } = get()
@@ -345,23 +344,25 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     }),
                 )
-                if (result.maintenance) {
-                    setServerIsUnderMaintenance(true)
-                    setExpectedAvailabilityDate(result.expectedAvailability)
-                    return
-                }
-                setServerIsUnderMaintenance(false)
-                setExpectedAvailabilityDate(null)
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return
+
                 if (result.error) {
                     if (result.loginAgain) {
-                        addClientAlert('Your session has timed out. Please log in.', 'error')
+                        alert('Your session has timed out. Please log in.')
                         onSignOut()
                         return
                     }
-                    addClientAlert('Error fetching user nodes. Please sign in again if issue persists.', 'error')
+
+                    addClientAlert(
+                        'Error fetching user nodes. Please sign in again if issue persists.',
+                    )
                     return
                 }
-                if (result.data && Array.isArray(result.data.nodes)) {
+                if (
+                    result.data &&
+                    Array.isArray(result.data.nodes)
+                ) {
                     set({ userNodes: result.data.nodes })
                 } else if (!existingTimeout) {
                     const timeout = setTimeout(() => {
@@ -370,7 +371,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 }
             },
             checkProducts: async (locale: string) => {
-                const { addClientAlert, setServerIsUnderMaintenance, setExpectedAvailabilityDate } = get()
+                const { addClientAlert } = get()
                 const result = await middleware(
                     axios.get(`/api/products/${locale}`, {
                         headers: {
@@ -379,28 +380,22 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     }),
                 );
-                if (result.maintenance) {
-                    setServerIsUnderMaintenance(true)
-                    setExpectedAvailabilityDate(result.expectedAvailability)
-                    return []
-                }
-                setServerIsUnderMaintenance(false)
-                setExpectedAvailabilityDate(null)
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return []
+
                 if (result.error) {
                     addClientAlert(
                         'Error fetching products. Please sign in again if issue persists.',
-                        'error'
                     )
                     return []
                 }
-                console.log({ products: result })
                 return result.data as ProductSubscription[]
             },
             purchaseProduct: async (fee: { productId: number, periodicity: string, price: number }) => {
-                const { getTokenViaLoginMode, setServerIsUnderMaintenance, setExpectedAvailabilityDate, addClientAlert, } = get()
+                const { getTokenViaLoginMode, addClientAlert } = get()
                 const token = getTokenViaLoginMode()
                 if (!token) {
-                    addClientAlert('You are not signed in. Please do so in order to perform this action.', 'error')
+                    addClientAlert('You are not signed in. Please do so in order to perform this action.')
                     return null
                 }
                 const result = await middleware(
@@ -411,21 +406,15 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     })
                 )
-                if (result.maintenance) {
-                    setServerIsUnderMaintenance(true)
-                    setExpectedAvailabilityDate(result.expectedAvailability)
-                    return null
-                }
-                setServerIsUnderMaintenance(false)
-                setExpectedAvailabilityDate(null)
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return null
+
                 if (result.error || !result.data?.message || !result.data?.subscriptionId) {
                     addClientAlert(
                         'Error fetching products. Please sign in again if issue persists.',
-                        'error'
                     )
                     return null
                 }
-                console.log({ purchaseProductResult: result })
                 return result.data as { message: string, subscriptionId: number }
             },
             assignSubscription: async (subscriptionId: number, kinodeName: string, kinodePassword: string) => {
@@ -477,7 +466,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             addClientAlert: (
                 message: string | ServerAlert | ClientAlert,
-                type?: 'success' | 'error' | 'info' | 'warning'
+                type?: 'success' | 'error' | 'info' | 'warning' | 'danger'
             ) => {
                 let toastMessage: string
                 let toastType = type
@@ -496,7 +485,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                     toastMessage = message
                 } else {
                     toastMessage = message.content
-                    toastType = toastType || convertAlertClassToToastType(message.class)
+                    toastType = convertAlertClassToToastType(toastType || message.class)
 
                     if ('end_time' in message && message.end_time) {
                         const timeRemaining = formatTimeRemaining(message.end_time)
@@ -545,13 +534,10 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     }),
                 )
-                if (result.maintenance) {
-                    setServerIsUnderMaintenance(true)
-                    setExpectedAvailabilityDate(result.expectedAvailability)
-                    return false
-                }
-                setServerIsUnderMaintenance(false)
-                setExpectedAvailabilityDate(null)
+
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return false
+
                 if (result.error) {
                     if (result.loginAgain) {
                         addClientAlert('Your session has timed out. Please log in.', 'error')
@@ -604,16 +590,10 @@ const useDialSiteStore = create<DialSiteStore>()(
                         { headers },
                     ),
                 )
-                if (result.maintenance) {
-                    setServerIsUnderMaintenance(true)
-                    setExpectedAvailabilityDate(result.expectedAvailability)
-                    return {
-                        success: false,
-                        error: 'Server Maintenance in Progress',
-                    }
-                }
-                setServerIsUnderMaintenance(false)
-                setExpectedAvailabilityDate(null)
+
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return { success: false, error: 'Server Maintenance in Progress' }
+
                 if (result.error) {
                     if (result.loginAgain) {
                         addClientAlert('Your session has timed out. Please log in.', 'error')
@@ -661,16 +641,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     ),
                 )
-                if (result.maintenance) {
-                    setServerIsUnderMaintenance(true)
-                    setExpectedAvailabilityDate(result.expectedAvailability)
-                    return {
-                        success: false,
-                        error: 'Server Maintenance in Progress',
-                    }
-                }
-                setServerIsUnderMaintenance(false)
-                setExpectedAvailabilityDate(null)
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return { success: false, error: 'Server Maintenance in Progress' }
+
                 if (result.error) {
                     return { success: false, error: result.message }
                 }
@@ -711,14 +684,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                         },
                     ),
                 )
-                if (result.maintenance) {
-                    setServerIsUnderMaintenance(true)
-                    setExpectedAvailabilityDate(result.expectedAvailability)
-                    return {
-                        success: false,
-                        error: 'Server Maintenance in Progress',
-                    }
-                }
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return { success: false, error: 'Server Maintenance in Progress' }
+
                 if (result.error) {
                     return {
                         success: false,
@@ -741,6 +709,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                     })
                 )
 
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return false;
+
                 if (result.error) {
                     addClientAlert(result.message || 'Failed to add user', 'error')
                     return false
@@ -762,6 +733,8 @@ const useDialSiteStore = create<DialSiteStore>()(
                         }
                     })
                 )
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return false;
 
                 if (result.error) {
                     addClientAlert(result.message || 'Failed to update identifier', 'error')
@@ -785,6 +758,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                     })
                 )
 
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return false;
+
                 if (result.error) {
                     addClientAlert(result.message || 'Failed to update remaining kinodes', 'error')
                     return false
@@ -807,6 +783,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                     })
                 )
 
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return false;
+
                 if (result.error) {
                     addClientAlert(result.message || 'Failed to update trial status', 'error')
                     return false
@@ -826,6 +805,9 @@ const useDialSiteStore = create<DialSiteStore>()(
                         }
                     })
                 )
+
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return false;
 
                 if (result.error) {
                     addClientAlert(result.message || 'Failed to delete user', 'error')
