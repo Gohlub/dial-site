@@ -39,12 +39,20 @@ export const LoginBox = () => {
         setUserPasswordHash(loginPasswordHash)
         setLoadingStage('kinode')
         const success = await loginWithEmail(loginEmail, loginPasswordHash)
-        if (success && userNodes?.[0]) {
-            try {
-                await loginToNode(userNodes[0], loginPasswordHash)
-            } catch (error) {
-                addClientAlert('Failed to login to node: ' + (error as Error).message)
+        if (success) {
+            if (userNodes?.[0]) {
+                try {
+                    await loginToNode(userNodes[0], loginPasswordHash)
+                } catch (error) {
+                    addClientAlert('Failed to login to node: ' + (error as Error).message)
+                }
+            } else {
+                // user has no nodes yet
+                setLoadingStage()
             }
+        } else {
+            // login failed
+            setLoadingStage()
         }
     }
 

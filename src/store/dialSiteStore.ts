@@ -479,7 +479,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 let toastOptions: ToastOptions = {
                     position: "top-right",
                     autoClose: 5000,
-                    hideProgressBar: false,
+                    hideProgressBar: true,
                     closeOnClick: true,
                     pauseOnHover: true,
                     draggable: true,
