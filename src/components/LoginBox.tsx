@@ -8,6 +8,7 @@ import { switchToOptimism } from '../utilities/eth'
 import { ethers } from 'ethers'
 import { SiweMessage } from 'siwe'
 import { loginToNode, deriveNodePassword } from '../utilities/auth'
+import { NodeSelectionModal } from './NodeSelectionModal'
 
 export const LoginBox = () => {
     const {
@@ -27,6 +28,7 @@ export const LoginBox = () => {
     const [loginEmail, setLoginEmail] = useState('')
     const [loginPassword, setLoginPassword] = useState('')
     const [loginPasswordHash, setLoginPasswordHash] = useState('')
+    const [nodeSelectionOpen, setNodeSelectionOpen] = useState(false)
 
     const onLoginPasswordChanged = async (password: string) => {
         setLoginPassword(password)
@@ -40,11 +42,15 @@ export const LoginBox = () => {
         setLoadingStage('kinode')
         const success = await loginWithEmail(loginEmail, loginPasswordHash)
         if (success) {
-            if (userNodes?.[0]) {
-                try {
-                    await loginToNode(userNodes[0], loginPasswordHash)
-                } catch (error) {
-                    addClientAlert('Failed to login to node: ' + (error as Error).message)
+            if (userNodes && userNodes.length > 0) {
+                if (userNodes.length === 1) {
+                    try {
+                        await loginToNode(userNodes[0], loginPasswordHash)
+                    } catch (error) {
+                        addClientAlert('Failed to login to node: ' + (error as Error).message)
+                    }
+                } else {
+                    setNodeSelectionOpen(true)
                 }
             } else {
                 // user has no nodes yet
@@ -99,14 +105,19 @@ export const LoginBox = () => {
             const reginResult = await registerSiwe(messageToSign, signature)
             if (reginResult?.jwt) {
                 setSiweToken(reginResult.jwt)
-                if (userNodes?.[0] && userInfo?.id) {
+                if (userNodes && userNodes.length > 0 && userInfo?.id) {
                     try {
                         const derivedPassword = await deriveNodePassword(
                             userInfo.id.toString(),
                             'siwe'
                         );
                         setUserPasswordHash(derivedPassword || reginResult.jwt)
-                        await loginToNode(userNodes[0], derivedPassword || reginResult.jwt);
+
+                        if (userNodes.length === 1) {
+                            await loginToNode(userNodes[0], derivedPassword || reginResult.jwt)
+                        } else {
+                            setNodeSelectionOpen(true)
+                        }
                     } catch (error) {
                         addClientAlert('Failed to login to node: ' + (error as Error).message)
                     }
@@ -121,45 +132,53 @@ export const LoginBox = () => {
     // const isMobile = useIsMobile()
 
     return (
-        <div className="flex flex-col gap-4 items-center">
-            <h3 className="text-2xl">Login to Dial</h3>
-            <input
-                type="email"
-                placeholder="Email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-            />
-            <input
-                type="password"
-                placeholder="Password"
-                value={loginPassword}
-                onChange={(e) => onLoginPasswordChanged(e.target.value)}
-                onKeyUp={(e) => {
-                    if (e.key === 'Enter') {
-                        onLoginWithEmail()
-                    }
-                }}
-            />
-            <button
-                className="text-lg self-stretch"
-                onClick={onLoginWithEmail}
-            >
-                Sign in
-            </button>
-            <div className="flex gap-4 grow self-stretch">
+        <>
+            <div className="flex flex-col gap-4 items-center">
+                <h3 className="text-2xl">Login to Dial</h3>
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={loginPassword}
+                    onChange={(e) => onLoginPasswordChanged(e.target.value)}
+                    onKeyUp={(e) => {
+                        if (e.key === 'Enter') {
+                            onLoginWithEmail()
+                        }
+                    }}
+                />
                 <button
-                    onClick={redirectToX}
-                    className="grow bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
+                    className="text-lg self-stretch"
+                    onClick={onLoginWithEmail}
                 >
-                    <FaXTwitter />
+                    Sign in
                 </button>
-                <button
-                    onClick={onSiweSignInClick}
-                    className="grow bg-[#627EEA] text-lg border-[#627EEA] self-stretch gap-4 items-center flex"
-                >
-                    <FaEthereum />
-                </button>
+                <div className="flex gap-4 grow self-stretch">
+                    <button
+                        onClick={redirectToX}
+                        className="grow bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
+                    >
+                        <FaXTwitter />
+                    </button>
+                    <button
+                        onClick={onSiweSignInClick}
+                        className="grow bg-[#627EEA] text-lg border-[#627EEA] self-stretch gap-4 items-center flex"
+                    >
+                        <FaEthereum />
+                    </button>
+                </div>
             </div>
-        </div>
+            <NodeSelectionModal
+                isOpen={nodeSelectionOpen}
+                onClose={() => setNodeSelectionOpen(false)}
+                nodes={userNodes || []}
+                passwordHash={loginPasswordHash}
+            />
+        </>
     )
 }
