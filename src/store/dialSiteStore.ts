@@ -521,8 +521,6 @@ const useDialSiteStore = create<DialSiteStore>()(
             checkIsNodeAvailable: async (node: string) => {
                 const {
                     getTokenViaLoginMode,
-                    setServerIsUnderMaintenance,
-                    setExpectedAvailabilityDate,
                     addClientAlert,
                     onSignOut,
                 } = get()
@@ -563,8 +561,6 @@ const useDialSiteStore = create<DialSiteStore>()(
             bootNode: async (kinodeName: string, passwordHash: string) => {
                 const {
                     getTokenViaLoginMode,
-                    setServerIsUnderMaintenance,
-                    setExpectedAvailabilityDate,
                     onSignOut,
                     addClientAlert,
                 } = get()
@@ -618,8 +614,6 @@ const useDialSiteStore = create<DialSiteStore>()(
             resetNodePassword: async (node: UserNode, passwordHash: string) => {
                 const {
                     getTokenViaLoginMode,
-                    setServerIsUnderMaintenance,
-                    setExpectedAvailabilityDate,
                 } = get()
                 const token = getTokenViaLoginMode()
                 if (!token)
@@ -662,8 +656,6 @@ const useDialSiteStore = create<DialSiteStore>()(
             ) => {
                 const {
                     getTokenViaLoginMode,
-                    setServerIsUnderMaintenance,
-                    setExpectedAvailabilityDate,
                 } = get()
                 const token = getTokenViaLoginMode()
                 if (!token)

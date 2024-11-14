@@ -1,5 +1,5 @@
 import useDialSiteStore, { LoginMode } from '../store/dialSiteStore'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import NavBar from '../components/NavBar'
 import classNames from 'classnames'
