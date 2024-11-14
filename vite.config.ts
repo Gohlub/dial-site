@@ -32,4 +32,28 @@ export default defineConfig({
             },
         },
     },
+    build: {
+        // Add build logging
+        reportCompressedSize: true,
+        minify: 'terser',
+        terserOptions: {
+            compress: {
+                drop_console: false // Keep console logs during build
+            }
+        },
+        rollupOptions: {
+            onwarn(warning, warn) {
+                console.log('Rollup warning:', warning);
+                warn(warning);
+            },
+            output: {
+                manualChunks: {
+                    'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+                    'vendor-eth': ['ethers', 'siwe'],
+                    'vendor-ui': ['react-icons', 'react-toastify', 'classnames'],
+                    'vendor-utils': ['axios', 'dayjs', 'zustand']
+                }
+            }
+        }
+    },
 })
