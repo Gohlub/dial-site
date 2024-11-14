@@ -7,7 +7,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const app = express()
-const PORT = process.env.NODE_ENV === 'production' ? 8081 : 8082
+const PORT = process.env.PORT || 8080
 const API_URL =
     process.env.NODE_ENV === 'production'
         ? 'https://api.hosting.kinode.net'
