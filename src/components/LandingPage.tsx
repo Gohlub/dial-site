@@ -3,6 +3,8 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Autoplay } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
+import { Link } from 'react-router-dom'
+import { useIsMobile } from '../utilities/dimensions'
 
 const carouselImages = [
     {
@@ -27,6 +29,7 @@ const carouselImages = [
 ]
 
 export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
+    const isMobile = useIsMobile()
     const fadeIn = {
         initial: { opacity: 0, y: 20 },
         animate: { opacity: 1, y: 0 },
@@ -39,10 +42,9 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
                 className="w-full md:max-w-4xl mx-auto px-4 py-16 text-center flex flex-col items-center"
                 {...fadeIn}
             >
-                <h1 className="text-6xl mb-6">Welcome to Dial</h1>
+                <h1 className="text-6xl mb-6 font-normal md:font-bold">{isMobile ? `Dial: the new social media` : 'Welcome to Dial'}</h1>
                 <p className="text-xl mb-8 text-gray-700">
-                    The modern social protocol for cataloging and discovering content
-                    across the internet and beyond
+                    {isMobile ? 'Curators pull in the best content from across the internet, including social media, video, podcast, blogs and more.' : 'The modern social protocol for cataloging and discovering content across the internet and beyond'}
                 </p>
                 <button
                     onClick={onGetStarted}
@@ -66,7 +68,7 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
             </motion.div>
 
             <motion.div
-                className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto px-4 md:px-32 py-16"
+                className="grid md:grid-cols-3 gap-12 max-w-3/4 md:max-w-6xl mx-auto px-4 md:px-32 py-16"
                 initial={{ opacity: 0, y: 60 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.6 }}
@@ -114,7 +116,7 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
                         className="rounded-2xl p-8 bg-orange/25"
                     >
                         {carouselImages.map((image, index) => (
-                            <SwiperSlide key={index} className="flex flex-col items-center">
+                            <SwiperSlide key={index} className="flex flex-col items-center px-8 md:px-0">
                                 <h2 className="text-3xl text-center mb-12">{image.title}</h2>
                                 <p className="text-center text-gray-600 mb-8">
                                     {image.description}
@@ -122,7 +124,7 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
                                 <img
                                     src={image.src}
                                     alt={image.alt}
-                                    className="w-1/2 h-auto"
+                                    className="w-3/4 md:w-1/2 h-auto"
                                 />
                             </SwiperSlide>
                         ))}
@@ -160,6 +162,11 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
                     </button>
                 </div>
             </motion.div>
+
+            <footer className="w-full bg-orange text-white px-16 py-12 flex flex-row items-center justify-between">
+                <img src="/DIAL_white.svg" alt="Dial Logo" className="h-8" />
+                <Link to="#" onClick={onGetStarted} className="text-white decoration-none font-normal text-xl">Sign up</Link>
+            </footer>
 
             {/* <footer className="w-full bg-white py-12">
                 <div className="max-w-6xl mx-auto px-4">
