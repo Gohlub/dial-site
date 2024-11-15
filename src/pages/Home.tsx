@@ -47,7 +47,7 @@ export const Home = () => {
 
     const [entryMode, setEntryMode] = useState<'login' | 'signup'>('login')
     const [userToken, setUserToken] = useState<string | null>(null)
-    const [hasFetchedUserInfo, setHasFetchedUserInfo] = useState(false)
+    const [_hasFetchedUserInfo, setHasFetchedUserInfo] = useState(false)
 
     useEffect(() => {
         const token = getTokenViaLoginMode()
@@ -201,6 +201,7 @@ export const Home = () => {
                                 </div>
                             </>
                         )}
+                        <SignupBox />
                         {!userToken && (
                             <>
                                 <div className="h-[1px] bg-black w-full" />
