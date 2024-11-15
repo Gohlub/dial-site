@@ -201,16 +201,6 @@ export const Home = () => {
                                 </div>
                             </>
                         )}
-                        {hasFetchedUserInfo ?
-                            <StagedLoadingOverlay
-                                stages={{
-                                    'signup': 'Signing up...',
-                                    'done': 'Done!',
-                                }}
-                                currentStage="signup"
-                                finalStage="done"
-                            />
-                            : <SignupBox />}
                         {!userToken && (
                             <>
                                 <div className="h-[1px] bg-black w-full" />
