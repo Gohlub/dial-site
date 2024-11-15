@@ -104,6 +104,8 @@ export interface DialSiteStore {
     searchUserById: (userId: string) => Promise<UserInfo | null>
     userPasswordHash: string | null
     setUserPasswordHash: (hash: string | null) => void
+    hasSeenLanding: boolean
+    setHasSeenLanding: (hasSeen: boolean) => void
 }
 
 const convertAlertClassToToastType = (alertClass: string) => {
@@ -883,6 +885,8 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             userPasswordHash: null,
             setUserPasswordHash: (hash: string | null) => set({ userPasswordHash: hash }),
+            hasSeenLanding: false,
+            setHasSeenLanding: (hasSeen: boolean) => set({ hasSeenLanding: hasSeen }),
         }),
         {
             name: 'dial-site',

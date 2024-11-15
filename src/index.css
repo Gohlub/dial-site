@@ -62,6 +62,26 @@ h6 {
     @apply text-sm;
 }
 
+.landing-page {
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    button {
+        border-width: 0 !important;
+        border-radius: 1em !important;
+        background-color: #f8a31fAA !important;
+        color: black !important;
+        font-family: 'Poppins', sans-serif;
+    }
+}
+
 button,
 button[type='submit'],
 .button {
@@ -84,6 +104,7 @@ button[type='submit'],
     @apply flex items-center text-black hover:text-white place-content-center bg-transparent w-11 p-3 text-[14px] rounded-full border-orange/25;
 }
 
+
 .icon.alt {
     @apply border-black/25 hover:border-white/25;
 }
@@ -96,6 +117,11 @@ body {
             transparent 62.05%),
         radial-gradient(circle at -7% 152%, #f8a31fff 44%, transparent 72.05%),
         radial-gradient(circle at 106% -7%, #f8a31fff 19%, transparent 44.05%);
+    background-attachment: fixed;
+    background-size: cover;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
 }
 
 select,
@@ -144,4 +170,18 @@ button:disabled {
 
 .c {
     @apply place-items-center place-content-center;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+    color: #FF9900 !important;
+    background: transparent;
+    width: 60px !important;
+    height: 60px !important;
+}
+
+
+.swiper-button-disabled {
+    opacity: 0.35 !important;
+    cursor: not-allowed;
 }

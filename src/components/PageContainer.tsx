@@ -11,7 +11,7 @@ export default function PageContainer({
     return (
         <div
             className={classNames(
-                'flex flex-col items-center h-screen w-screen relative',
+                'flex flex-col items-center h-screen w-screen relative overflow-x-hidden',
                 className,
             )}
             {...props}

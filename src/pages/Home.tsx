@@ -12,9 +12,11 @@ import { useLocation } from 'react-router-dom'
 import { NODE_LOADING_STAGES } from '../types/nodeLoadingStages'
 import { deriveNodePassword, } from '../utilities/auth'
 import 'react-toastify/dist/ReactToastify.css'
+import { LandingPage } from '../components/LandingPage'
 dayjs.extend(relativeTime)
 
 export const Home = () => {
+
     const {
         getServerAlerts,
         xToken,
@@ -36,6 +38,8 @@ export const Home = () => {
         setLoadingStage,
         addClientAlert,
         userPasswordHash,
+        hasSeenLanding,
+        setHasSeenLanding,
     } = useDialSiteStore()
 
     const location = useLocation()
@@ -159,6 +163,15 @@ export const Home = () => {
             }
         }
     }, [userNodes])
+
+    const handleGetStarted = () => {
+        localStorage.setItem('hasSeenLanding', 'true')
+        setHasSeenLanding(true)
+    }
+
+    if (!hasSeenLanding) {
+        return <LandingPage onGetStarted={handleGetStarted} />
+    }
 
     const isMobile = useIsMobile()
 
