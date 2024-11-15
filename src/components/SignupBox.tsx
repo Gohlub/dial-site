@@ -341,7 +341,7 @@ export const SignupBox = () => {
             ' grow self-stretch place-items-center place-content-center': signupStage !== 'credentials',
         })}>
             {loginMode !== LoginMode.None && (
-                <div className={classNames("text-white text-xl flex items-center gap-2 rounded-xl p-4", {
+                <div className={classNames("text-white text-xs flex items-center gap-2 rounded-xl p-2", {
                     'bg-orange': loginMode === LoginMode.Email,
                     'bg-blue-500': loginMode === LoginMode.X,
                     'bg-[#627EEA]': loginMode === LoginMode.SIWE,
@@ -353,7 +353,7 @@ export const SignupBox = () => {
                     ) : loginMode === LoginMode.Email ? (
                         <FaEnvelope />
                     ) : null}
-                    <span>You're signing up with {loginMode === LoginMode.X ?
+                    <span>Signing up with {loginMode === LoginMode.X ?
                         'X' : loginMode === LoginMode.SIWE ?
                             'Ethereum' :
                             'email'}</span>
