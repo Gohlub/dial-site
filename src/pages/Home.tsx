@@ -43,6 +43,7 @@ export const Home = () => {
 
     const [entryMode, setEntryMode] = useState<'login' | 'signup'>('login')
     const [userToken, setUserToken] = useState<string | null>(null)
+    const [hasFetchedUserInfo, setHasFetchedUserInfo] = useState(false)
 
     useEffect(() => {
         const token = getTokenViaLoginMode()
@@ -146,11 +147,15 @@ export const Home = () => {
     }, [userToken, userNodes, loginMode])
 
     useEffect(() => {
-        if (userNodes?.length > 0) {
-            const firstNode = userNodes[0]
-            if (firstNode?.link && firstNode.ship_type === 'kinode') {
-                setLoadingStage('kinode')
+        if (userNodes) {
+            setHasFetchedUserInfo(true)
 
+            if (userNodes.length > 0) {
+                const firstNode = userNodes[0]
+                if (firstNode?.link && firstNode.ship_type === 'kinode') {
+                    setLoadingStage('kinode')
+
+                }
             }
         }
     }, [userNodes])
@@ -183,7 +188,16 @@ export const Home = () => {
                                 </div>
                             </>
                         )}
-                        <SignupBox />
+                        {hasFetchedUserInfo ?
+                            <StagedLoadingOverlay
+                                stages={{
+                                    'signup': 'Signing up...',
+                                    'done': 'Done!',
+                                }}
+                                currentStage="signup"
+                                finalStage="done"
+                            />
+                            : <SignupBox />}
                         {!userToken && (
                             <>
                                 <div className="h-[1px] bg-black w-full" />
