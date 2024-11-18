@@ -49,7 +49,8 @@ export default defineConfig({
             output: {
                 manualChunks: {
                     'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-                    'vendor-eth': ['ethers', 'siwe'],
+                    'vendor-ethers': ['ethers'],
+                    'vendor-siwe': ['siwe'],
                     'vendor-ui': ['react-icons', 'react-toastify', 'classnames'],
                     'vendor-utils': ['axios', 'dayjs', 'zustand']
                 }
