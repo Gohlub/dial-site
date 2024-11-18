@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Navigation, Autoplay } from 'swiper/modules'
+import { Navigation, Autoplay, Pagination } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
+import 'swiper/css/pagination'
 import { Link } from 'react-router-dom'
 import { useIsMobile } from '../utilities/dimensions'
 
@@ -68,37 +69,76 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
             </motion.div>
 
             <motion.div
-                className="grid md:grid-cols-3 gap-12 max-w-3/4 md:max-w-6xl mx-auto px-4 md:px-32 py-16"
+                className="md:grid md:grid-cols-3 gap-12 max-w-3/4 md:max-w-6xl mx-auto px-4 md:px-32 py-16"
                 initial={{ opacity: 0, y: 60 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.6 }}
             >
-                <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4">
-                        <img src="/icons/personalization.svg" alt="Personalization" className="w-full h-full" />
-                    </div>
-                    <p className="text-gray-600">
-                        Personalized stations serve high quality content to feeds custom tailored to your interests
-                    </p>
-                </div>
+                {isMobile ? (
+                    <Swiper
+                        modules={[Pagination]}
+                        pagination={{
+                            clickable: true,
+                            bulletActiveClass: 'swiper-pagination-bullet-active bg-orange w-8',
+                            bulletClass: 'swiper-pagination-bullet bg-gray-300 mx-1 inline-block h-2 rounded-full transition-all duration-200',
+                        }}
+                        className="w-full"
+                    >
+                        {[
+                            {
+                                icon: "/icons/personalization.svg",
+                                alt: "Personalization",
+                                text: "Personalized stations serve high quality content to feeds custom tailored to your interests"
+                            },
+                            {
+                                icon: "/icons/curation.svg",
+                                alt: "Curation",
+                                text: "Human curation and AI discovery combine to surface the best of the web"
+                            },
+                            {
+                                icon: "/icons/extensible.svg",
+                                alt: "Extensible",
+                                text: "Permissionless protocol enables third-party development of novel extensions"
+                            }
+                        ].map((item, index) => (
+                            <SwiperSlide key={index} className="text-center px-4 pb-16">
+                                <div className="w-16 h-16 mx-auto mb-4">
+                                    <img src={item.icon} alt={item.alt} className="w-full h-full" />
+                                </div>
+                                <p className="text-gray-600">{item.text}</p>
+                            </SwiperSlide>
+                        ))}
+                    </Swiper>
+                ) : (
+                    <>
+                        <div className="text-center">
+                            <div className="w-16 h-16 mx-auto mb-4">
+                                <img src="/icons/personalization.svg" alt="Personalization" className="w-full h-full" />
+                            </div>
+                            <p className="text-gray-600">
+                                Personalized stations serve high quality content to feeds custom tailored to your interests
+                            </p>
+                        </div>
 
-                <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4">
-                        <img src="/icons/curation.svg" alt="Curation" className="w-full h-full" />
-                    </div>
-                    <p className="text-gray-600">
-                        Human curation and AI discovery combine to surface the best of the web
-                    </p>
-                </div>
+                        <div className="text-center">
+                            <div className="w-16 h-16 mx-auto mb-4">
+                                <img src="/icons/curation.svg" alt="Curation" className="w-full h-full" />
+                            </div>
+                            <p className="text-gray-600">
+                                Human curation and AI discovery combine to surface the best of the web
+                            </p>
+                        </div>
 
-                <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4">
-                        <img src="/icons/extensible.svg" alt="Extensible" className="w-full h-full" />
-                    </div>
-                    <p className="text-gray-600">
-                        Permissionless protocol enables third-party development of novel extensions
-                    </p>
-                </div>
+                        <div className="text-center">
+                            <div className="w-16 h-16 mx-auto mb-4">
+                                <img src="/icons/extensible.svg" alt="Extensible" className="w-full h-full" />
+                            </div>
+                            <p className="text-gray-600">
+                                Permissionless protocol enables third-party development of novel extensions
+                            </p>
+                        </div>
+                    </>
+                )}
             </motion.div>
 
             <motion.div
