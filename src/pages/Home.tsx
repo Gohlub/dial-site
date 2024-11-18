@@ -48,6 +48,7 @@ export const Home = () => {
     const [entryMode, setEntryMode] = useState<'login' | 'signup'>('login')
     const [userToken, setUserToken] = useState<string | null>(null)
     const [_hasFetchedUserInfo, setHasFetchedUserInfo] = useState(false)
+    const [isInitialNodeCheck, setIsInitialNodeCheck] = useState(true)
 
     useEffect(() => {
         const token = getTokenViaLoginMode()
@@ -121,6 +122,7 @@ export const Home = () => {
                     setLoadingStage(userNodes[0].ship_type)
                 }
             } else {
+                setIsInitialNodeCheck(false)
                 setEntryMode('signup')
             }
         }
@@ -201,7 +203,15 @@ export const Home = () => {
                                 </div>
                             </>
                         )}
-                        <SignupBox />
+                        {isInitialNodeCheck ? (
+                            <StagedLoadingOverlay
+                                stages={{ checking: 'Checking your account...', kinode: 'Loading your kinode...' }}
+                                currentStage="checking"
+                                finalStage="kinode"
+                            />
+                        ) : (
+                            <SignupBox />
+                        )}
                         {!userToken && (
                             <>
                                 <div className="h-[1px] bg-black w-full" />

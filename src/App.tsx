@@ -24,7 +24,7 @@ function App() {
                     <Route path="/contact-us" element={<ContactUs />} />
                     <Route path="/operator/login" element={<OperatorLogin />} />
                     <Route
-                        path="/operator-dashboard"
+                        path="/operator/dashboard"
                         element={
                             <ProtectedRoute>
                                 <OperatorDashboard />

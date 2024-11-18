@@ -14,7 +14,7 @@ export default function OperatorDashboard() {
         operatorLogout,
         searchActiveUser,
         searchWhitelistedUser,
-        searchUserById
+        searchUserById,
     } = useDialSiteStore()
     const [searchTerm, setSearchTerm] = useState('')
     const [users, setUsers] = useState<UserInfo[]>([])
@@ -24,6 +24,7 @@ export default function OperatorDashboard() {
     const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const [userToDelete, setUserToDelete] = useState<string | null>(null)
+    const [searchModality, setSearchModality] = useState<'email' | 'phone' | 'id'>('email')
 
     const searchUser = async () => {
         if (!searchTerm.trim()) {
@@ -33,10 +34,10 @@ export default function OperatorDashboard() {
 
         setIsLoading(true)
         try {
-            if (/^\d+$/.test(searchTerm)) {
+            if (searchModality === 'id' && /^\d+$/.test(searchTerm)) {
                 const userById = await searchUserById(searchTerm)
                 setUsers(userById ? [userById] : [])
-            } else {
+            } else if (searchModality === 'email') {
                 const [activeUsers, whitelistedUsers] = await Promise.all([
                     searchActiveUser(searchTerm),
                     searchWhitelistedUser(searchTerm)
@@ -47,6 +48,10 @@ export default function OperatorDashboard() {
                     new Map(combinedUsers.map(user => [user.id, user])).values()
                 )
                 setUsers(uniqueUsers)
+            } else if (searchModality === 'phone') {
+                toast.warn('Phone search is not supported yet')
+                // const phoneUsers = await searchPhoneUser(searchTerm)
+                // setUsers(phoneUsers)
             }
 
             if (users.length === 0) {
@@ -99,8 +104,10 @@ export default function OperatorDashboard() {
         toast.success('Logged out successfully')
     }
 
+    console.log({ users })
+
     return (
-        <div>
+        <div className="min-h-screen flex flex-col operator-dashboard">
             {/* Header */}
             <div className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -143,6 +150,14 @@ export default function OperatorDashboard() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onKeyPress={handleSearchKeyPress}
                         />
+                        <select
+                            value={searchModality}
+                            onChange={(e) => setSearchModality(e.target.value as 'email' | 'phone' | 'id')}
+                        >
+                            <option value="email">Email</option>
+                            <option value="phone">Phone</option>
+                            <option value="id">ID</option>
+                        </select>
                         <button
                             onClick={searchUser}
                             disabled={isLoading}
@@ -191,7 +206,7 @@ export default function OperatorDashboard() {
                                             <td className="px-6 py-4 whitespace-nowrap">{user.id}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">{user.contact_email || '-'}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {user.xLogins[0]?.display_identifier || '-'}
+                                                {user.xLogins?.[0]?.display_identifier || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">{user.remaining_kinodes}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">

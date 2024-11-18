@@ -1,13 +1,16 @@
 import { Navigate } from 'react-router-dom'
+import useDialSiteStore from '../store/dialSiteStore'
 
 interface ProtectedRouteProps {
     children: React.ReactNode
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-    const token = localStorage.getItem('operatorToken')
+    const { operatorToken } = useDialSiteStore(state => ({
+        operatorToken: state.operatorToken
+    }))
 
-    if (!token) {
+    if (!operatorToken) {
         return <Navigate to="/operator/login" replace />
     }
 

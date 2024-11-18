@@ -105,7 +105,7 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Connected Accounts</h3>
 
                         {/* Email Logins */}
-                        {user.emailLogins.length > 0 && (
+                        {user.emailLogins?.length > 0 && (
                             <div className="mb-3">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Email Logins
@@ -121,7 +121,7 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
                         )}
 
                         {/* SIWE Logins */}
-                        {user.siweLogins.length > 0 && (
+                        {user.siweLogins?.length > 0 && (
                             <div className="mb-3">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Ethereum Wallets
@@ -137,7 +137,7 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
                         )}
 
                         {/* X Logins */}
-                        {user.xLogins.length > 0 && (
+                        {user.xLogins?.length > 0 && (
                             <div className="mb-3">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     X Accounts
@@ -156,9 +156,9 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
                         )}
 
                         {/* No Connected Accounts Message */}
-                        {user.emailLogins.length === 0 &&
-                            user.siweLogins.length === 0 &&
-                            user.xLogins.length === 0 && (
+                        {user.emailLogins?.length === 0 &&
+                            user.siweLogins?.length === 0 &&
+                            user.xLogins?.length === 0 && (
                                 <div className="text-sm text-gray-500 italic">
                                     No connected accounts found
                                 </div>
