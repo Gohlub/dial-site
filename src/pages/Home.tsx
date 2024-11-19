@@ -255,6 +255,13 @@ export const Home = () => {
                         >
                             Sign up
                         </button>
+                        <button
+                            className="text-lg !bg-green border-green text-white flex items-center gap-2"
+                            onClick={() => window.location.href = 'https://valet.uncentered.systems'}
+                        >
+                            <img src="/valet-logo.svg" className="w-6 h-6" />
+                            <span>Manage Node on Valet</span>
+                        </button>
                     </div>
                 </div>
             )}
