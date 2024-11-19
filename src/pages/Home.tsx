@@ -203,7 +203,7 @@ export const Home = () => {
                                 </div>
                             </>
                         )}
-                        {isInitialNodeCheck ? (
+                        {userToken && isInitialNodeCheck ? (
                             <StagedLoadingOverlay
                                 stages={{ checking: 'Checking your account...', kinode: 'Loading your kinode...' }}
                                 currentStage="checking"

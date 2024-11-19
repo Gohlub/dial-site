@@ -56,6 +56,7 @@ export const SignupBox = () => {
     const [signupNodeName, setSignupNodeName] = useState('')
     const [nodeNameAvailable, setNodeNameAvailable] = useState(false)
     const [initializationStage, setInitializationStage] = useState<keyof typeof INITIALIZATION_STAGES>('none')
+    const [hasPurchasedFreeTrial, setHasPurchasedFreeTrial] = useState(false)
 
     console.log({
         loading,
@@ -285,7 +286,7 @@ export const SignupBox = () => {
     const onPurchaseFreeTrial = async () => {
         setInitializationStage('check-products')
         let subscription: { subscriptionId: number, message: string } | null = pendingSubscription
-        if (!subscription) {
+        if (!hasPurchasedFreeTrial && !subscription) {
             const products = await checkProducts('en')
             // console.log({ products })
             const freeTrialProduct = products.find(p => p.title === 'Dial Subscription')
@@ -315,8 +316,13 @@ export const SignupBox = () => {
             setInitializationStage('add-contact-email')
             await addContactEmail(signupEmail)
         }
-        setInitializationStage('assign-subscription')
-        await assignSubscription(subscription.subscriptionId, signupNodeName, signupPasswordHash)
+        if (!hasPurchasedFreeTrial) {
+            setInitializationStage('assign-subscription')
+            const success = await assignSubscription(subscription.subscriptionId, signupNodeName, signupPasswordHash)
+            if (success) {
+                setHasPurchasedFreeTrial(true)
+            }
+        }
         setInitializationStage('boot-node')
         const bootSuccess = await onBootNode()
         if (bootSuccess) {
