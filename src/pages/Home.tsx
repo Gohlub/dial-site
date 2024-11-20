@@ -85,7 +85,7 @@ export const Home = () => {
                                 password = node.kinode_password || userPasswordHash
                             } else {
                                 const serviceType = loginMode === LoginMode.X ? 'x' : 'siwe';
-                                password = await deriveNodePassword(
+                                password = node.kinode_password || await deriveNodePassword(
                                     userInfo.id.toString(),
                                     serviceType
                                 );
