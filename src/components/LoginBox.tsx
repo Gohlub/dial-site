@@ -10,6 +10,7 @@ import { SiweMessage } from 'siwe'
 import { loginToNode, deriveNodePassword } from '../utilities/auth'
 import { NodeSelectionModal } from './NodeSelectionModal'
 import { getFirstNode } from '../types/UserNode'
+import ForgotPasswordModal from './ForgotPasswordModal'
 
 export const LoginBox = () => {
     const {
@@ -29,6 +30,7 @@ export const LoginBox = () => {
     const [loginPassword, setLoginPassword] = useState('')
     const [loginPasswordHash, setLoginPasswordHash] = useState('')
     const [nodeSelectionOpen, setNodeSelectionOpen] = useState(false)
+    const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false)
 
     const onLoginPasswordChanged = async (password: string) => {
         setLoginPassword(password)
@@ -180,7 +182,17 @@ export const LoginBox = () => {
                         <FaEthereum />
                     </button>
                 </div>
+                <button
+                    className="text-lg self-stretch alt"
+                    onClick={() => setForgotPasswordOpen(true)}
+                >
+                    Forgot Password?
+                </button>
             </div>
+            <ForgotPasswordModal
+                isOpen={forgotPasswordOpen}
+                onClose={() => setForgotPasswordOpen(false)}
+            />
             <NodeSelectionModal
                 isOpen={nodeSelectionOpen}
                 onClose={() => setNodeSelectionOpen(false)}
