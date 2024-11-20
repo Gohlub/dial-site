@@ -350,7 +350,7 @@ export const SignupBox = () => {
     }, [signupPasswordHash])
 
     const isMobile = useIsMobile()
-    const boxClass = classNames('flex flex-col gap-2 place-items-center rounded-xl bg-white/75 shadow-xl backdrop-blur-lg p-4 w-screen', {
+    const boxClass = classNames('flex flex-col w-full max-w-full md:max-w-screen gap-4 items-stretch rounded-xl bg-white/75 backdrop-blur-lg p-4', {
         'max-w-[600px]': !isMobile,
     });
 
@@ -359,7 +359,7 @@ export const SignupBox = () => {
             ' grow self-stretch place-items-center place-content-center': signupStage !== 'credentials',
         })}>
             {loginMode !== LoginMode.None && (
-                <div className={classNames("rounded-full text-xs flex items-center gap-2 rounded-xl p-2 md:p-4", {
+                <div className={classNames("rounded-full flex items-center gap-2 px-8 py-4", {
                     'bg-orange/10': loginMode === LoginMode.Email,
                     'bg-blue-500/10': loginMode === LoginMode.X,
                     'bg-[#627EEA]/10': loginMode === LoginMode.SIWE,
@@ -442,7 +442,7 @@ export const SignupBox = () => {
             )}
             {signupStage === 'code' && (
                 <div className={boxClass}>
-                    <h3>Check your email</h3>
+                    <h3 className="text-2xl self-center">Check your email</h3>
                     <p>
                         We sent a code to {signupEmail}.<br />
                         Please check your email and enter the code below.
@@ -465,7 +465,7 @@ export const SignupBox = () => {
             )}
             {signupStage === 'node-name' && (
                 <div className={boxClass}>
-                    <h3>Choose a node name</h3>
+                    <h3 className="text-2xl self-center">Choose a node name</h3>
                     <p>Your node name identifies you to the network, like a username.</p>
                     <input
                         type="text"
