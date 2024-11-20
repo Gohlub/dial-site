@@ -3,6 +3,7 @@ export interface UserNode {
     email: string
     id: number
     kinode_name: string
+    kinode_password: string
     last_restarted: string
     link: string
     maintenance_window: string

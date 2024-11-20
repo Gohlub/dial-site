@@ -8,6 +8,7 @@ import { ProductSubscription } from '../types/Subscriptions'
 import { toast, ToastOptions } from 'react-toastify'
 import { ServerAlert } from '../types/ServerAlert'
 import { ClientAlert } from '../types/ClientAlert'
+import { prepend0x } from '../utilities/auth'
 
 
 export enum LoginMode {
@@ -196,6 +197,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             registerEmail: async (email: string, hash: string) => {
                 const { addClientAlert } = get()
+                hash = prepend0x(hash)
                 const result = await middleware(
                     axios.post(
                         `/api/email/register`,
@@ -220,6 +222,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             verifyEmail: async (email: string, hash: string, code: string) => {
                 const { addClientAlert, setEmailToken } = get()
+                hash = prepend0x(hash)
                 const result = await middleware(
                     axios.post(
                         `/api/email/verify-account`,
@@ -247,6 +250,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             },
             loginWithEmail: async (email: string, password: string) => {
                 const { addClientAlert, setEmailToken } = get()
+                password = prepend0x(password)
                 const result = await middleware(
                     axios.post(
                         `/api/email/login`,
@@ -429,9 +433,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 const { getTokenViaLoginMode } = get()
                 const token = getTokenViaLoginMode()
                 if (!token) return false
-                if (!kinodePassword.startsWith('0x')) {
-                    kinodePassword = '0x' + kinodePassword
-                }
+                kinodePassword = prepend0x(kinodePassword)
                 const result = await middleware(
                     axios.post(`/api/user/assign-subscription`, {
                         subscriptionId,
@@ -572,9 +574,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                         success: false,
                         error: 'Token is required. Please log in.',
                     }
-                if (!passwordHash.startsWith('0x')) {
-                    passwordHash = '0x' + passwordHash
-                }
+                passwordHash = prepend0x(passwordHash)
                 if (kinodeName.includes('.')) {
                     kinodeName = kinodeName.split('.')[0]
                 }
@@ -626,9 +626,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (node.kinode_name.includes('.')) {
                     node.kinode_name = node.kinode_name.split('.')[0]
                 }
-                if (!passwordHash.startsWith('0x')) {
-                    passwordHash = '0x' + passwordHash
-                }
+                passwordHash = prepend0x(passwordHash)
                 const result = await middleware(
                     axios.put(
                         `/api/reset-kinode-password/${node.id}`,

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import useDialSiteStore from '../store/dialSiteStore'
 import { sha256 } from '../utilities/hash'
+import { prepend0x } from '../utilities/auth'
 
 const OperatorLogin = () => {
     const { operatorToken, setOperatorToken } = useDialSiteStore(state => ({
@@ -21,7 +22,7 @@ const OperatorLogin = () => {
         try {
             const response = await axios.post('/api/operator/login', {
                 email,
-                password: '0x' + (await sha256(password))
+                password: prepend0x(await sha256(password))
             })
 
             if (response.status === 200) {

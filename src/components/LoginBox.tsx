@@ -21,7 +21,6 @@ export const LoginBox = () => {
         addClientAlert,
         userNodes,
         userInfo,
-        setUserPasswordHash,
         setLoadingStage,
     } = useDialSiteStore()
 
@@ -38,14 +37,13 @@ export const LoginBox = () => {
 
     const onLoginWithEmail = async () => {
         setLoginMode(LoginMode.Email)
-        setUserPasswordHash(loginPasswordHash)
         setLoadingStage('kinode')
         const success = await loginWithEmail(loginEmail, loginPasswordHash)
         if (success) {
             if (userNodes && userNodes.length > 0) {
                 if (userNodes.length === 1) {
                     try {
-                        await loginToNode(userNodes[0], loginPasswordHash)
+                        await loginToNode(userNodes[0], userNodes[0].kinode_password)
                     } catch (error) {
                         addClientAlert('Failed to login to node: ' + (error as Error).message)
                     }
@@ -111,10 +109,9 @@ export const LoginBox = () => {
                             userInfo.id.toString(),
                             'siwe'
                         );
-                        setUserPasswordHash(derivedPassword || reginResult.jwt)
 
                         if (userNodes.length === 1) {
-                            await loginToNode(userNodes[0], derivedPassword || reginResult.jwt)
+                            await loginToNode(userNodes[0], userNodes[0].kinode_password || derivedPassword)
                         } else {
                             setNodeSelectionOpen(true)
                         }

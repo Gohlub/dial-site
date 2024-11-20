@@ -10,7 +10,7 @@ import StagedLoadingOverlay from '../components/StagedLoadingOverlay'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { useLocation } from 'react-router-dom'
 import { NODE_LOADING_STAGES } from '../types/nodeLoadingStages'
-import { deriveNodePassword, } from '../utilities/auth'
+import { deriveNodePassword, prepend0x, } from '../utilities/auth'
 import 'react-toastify/dist/ReactToastify.css'
 import { LandingPage } from '../components/LandingPage'
 dayjs.extend(relativeTime)
@@ -91,9 +91,7 @@ export const Home = () => {
                             console.log('password', password)
 
                             if (password) {
-                                if (!password.startsWith('0x')) {
-                                    password = '0x' + password
-                                }
+                                password = prepend0x(password)
 
                                 const nodeUrl = userNodes[0].link.replace('http://', 'https://');
 

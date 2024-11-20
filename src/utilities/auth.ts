@@ -110,4 +110,11 @@ export const loginToNode = async (node: UserNode, passwordHash: string) => {
         addClientAlert(`Failed to login to node: ${(error as Error).message}`)
         throw error;
     }
-}; 
+};
+
+export const prepend0x = (hash: string) => {
+    if (!hash) {
+        throw new Error('Hash is required')
+    }
+    return hash.startsWith('0x') ? hash : `0x${hash}`
+}

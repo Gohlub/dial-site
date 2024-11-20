@@ -10,7 +10,7 @@ import StagedLoadingOverlay from './StagedLoadingOverlay'
 import { SiweMessage } from 'siwe'
 import { ethers } from 'ethers'
 import { OPTIMISM_CHAIN_ID, switchToOptimism } from '../utilities/eth'
-import { loginToNode } from '../utilities/auth'
+import { deriveNodePassword, loginToNode } from '../utilities/auth'
 
 export const SignupBox = () => {
     const {
@@ -37,6 +37,7 @@ export const SignupBox = () => {
         getTokenViaLoginMode,
         registerSiwe,
         siweToken,
+        xToken,
         emailToken,
         setUserPasswordHash,
         userPasswordHash,
@@ -194,15 +195,12 @@ export const SignupBox = () => {
 
     useEffect(() => {
         if (signupStage === 'credentials') {
-            if (loginMode === LoginMode.X && userNodes.length === 0) {
+            if (loginMode === LoginMode.X && xToken && userNodes.length === 0) {
                 setSignupStage('node-name')
                 if (!signupPasswordHash) {
-                    const token = getTokenViaLoginMode()
-                    if (token) {
-                        sha256(token).then(hashHex => {
-                            setSignupPasswordHash(hashHex)
-                        })
-                    }
+                    sha256(xToken).then(hashHex => {
+                        setSignupPasswordHash(hashHex)
+                    })
                 }
             } else if (loginMode === LoginMode.SIWE && siweToken && userNodes.length === 0) {
                 setSignupStage('node-name')
@@ -214,9 +212,14 @@ export const SignupBox = () => {
             } else if (loginMode === LoginMode.Email && emailToken && userNodes.length === 0) {
                 setSignupStage('node-name')
                 setLoadingStage()
+                sha256(emailToken).then(hashHex => {
+                    setSignupPasswordHash(userPasswordHash || hashHex)
+                })
             }
+        } else if (userNodes.length > 0 && userNodes[0].kinode_password) {
+            setSignupPasswordHash(userNodes[0].kinode_password)
         }
-    }, [loginMode, signupStage, siweToken])
+    }, [loginMode, signupStage, siweToken, emailToken, xToken, userNodes])
 
     useEffect(() => {
         if (loginMode === LoginMode.Email) {
@@ -269,7 +272,7 @@ export const SignupBox = () => {
             await getUserNodes()
             if (userNodes?.[0]) {
                 try {
-                    await loginToNode(userNodes[0], signupPasswordHash)
+                    await loginToNode(userNodes[0], userNodes[0].kinode_password || signupPasswordHash)
                 } catch (error) {
                     addClientAlert(`Node created but login failed: ${error}. Please try logging in manually.`, 'error')
                 }
