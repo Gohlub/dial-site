@@ -355,14 +355,14 @@ export const SignupBox = () => {
     });
 
     return (
-        <div className={classNames("flex flex-col md:gap-4 gap-2 items-center max-h-screen overflow-y-auto", {
+        <div className={classNames("flex flex-col gap-8 items-stetch max-h-screen overflow-y-auto", {
             ' grow self-stretch place-items-center place-content-center': signupStage !== 'credentials',
         })}>
             {loginMode !== LoginMode.None && (
-                <div className={classNames("text-white text-xs flex items-center gap-2 rounded-xl p-2", {
-                    'bg-orange': loginMode === LoginMode.Email,
-                    'bg-blue-500': loginMode === LoginMode.X,
-                    'bg-[#627EEA]': loginMode === LoginMode.SIWE,
+                <div className={classNames("rounded-full text-xs flex items-center gap-2 rounded-xl p-2 md:p-4", {
+                    'bg-orange/10': loginMode === LoginMode.Email,
+                    'bg-blue-500/10': loginMode === LoginMode.X,
+                    'bg-[#627EEA]/10': loginMode === LoginMode.SIWE,
                 })}>
                     {loginMode === LoginMode.SIWE ? (
                         <FaEthereum />
@@ -371,7 +371,7 @@ export const SignupBox = () => {
                     ) : loginMode === LoginMode.Email ? (
                         <FaEnvelope />
                     ) : null}
-                    <span>Signing up with {loginMode === LoginMode.X ?
+                    <span>You're signing up with {loginMode === LoginMode.X ?
                         'X' : loginMode === LoginMode.SIWE ?
                             'Ethereum' :
                             'email'}</span>
@@ -379,60 +379,64 @@ export const SignupBox = () => {
             )}
             {signupStage === 'credentials' && (
                 <>
-                    <h3 className="text-2xl">Create an account</h3>
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={signupEmail}
-                        onChange={(e) => setSignupEmail(e.target.value)}
-                    />
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        minLength={8}
-                        value={signupPassword}
-                        onChange={(e) =>
-                            onSignupPasswordChanged(e.target.value)
-                        }
-                    />
-                    <input
-                        type="password"
-                        placeholder="Confirm Password"
-                        minLength={8}
-                        value={signupConfirmPassword}
-                        onChange={(e) =>
-                            onSignupConfirmPasswordChanged(e.target.value)
-                        }
-                    />
-                    <button
-                        className="text-lg self-stretch"
-                        disabled={
-                            signupEmail === '' ||
-                            signupPassword === '' ||
-                            signupConfirmPassword === '' ||
-                            alertText !== ''
-                        }
-                        onClick={onSignupWithEmail}
-                    >
-                        {loading ? (
-                            <FaCircleNotch className="animate-spin" />
-                        ) : (
-                            'Sign up'
-                        )}
-                    </button>
-                    <div className="flex gap-4 grow self-stretch">
+                    <h2 className="text-3xl self-center">Create an account</h2>
+                    <div className="flex flex-col self-stretch items-stretch gap-4">
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            value={signupEmail}
+                            onChange={(e) => setSignupEmail(e.target.value)}
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            minLength={8}
+                            value={signupPassword}
+                            onChange={(e) =>
+                                onSignupPasswordChanged(e.target.value)
+                            }
+                        />
+                        <input
+                            type="password"
+                            placeholder="Confirm Password"
+                            minLength={8}
+                            value={signupConfirmPassword}
+                            onChange={(e) =>
+                                onSignupConfirmPasswordChanged(e.target.value)
+                            }
+                        />
+                    </div>
+                    <div className="flex flex-col self-stretch items-stretch gap-4">
                         <button
-                            onClick={redirectToX}
-                            className="grow bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
+                            className="text-lg self-stretch disabled:bg-orange/80"
+                            disabled={
+                                signupEmail === '' ||
+                                signupPassword === '' ||
+                                signupConfirmPassword === '' ||
+                                alertText !== ''
+                            }
+                            onClick={onSignupWithEmail}
                         >
-                            <FaXTwitter />
+                            {loading ? (
+                                <FaCircleNotch className="animate-spin" />
+                            ) : (
+                                'Sign up'
+                            )}
                         </button>
-                        <button
-                            onClick={onSiweSignupClick}
-                            className="grow bg-[#627EEA] text-lg border-[#627EEA] self-stretch gap-4 items-center flex"
-                        >
-                            <FaEthereum />
-                        </button>
+                        <div className="flex gap-4 grow self-stretch">
+                            <button
+                                onClick={redirectToX}
+                                className="grow alt !text-black text-2xl self-stretch gap-4 items-center flex"
+                            >
+                                <FaXTwitter />
+                            </button>
+                            <button
+                                onClick={onSiweSignupClick}
+                                className="grow alt !text-black text-2xl self-stretch gap-4 items-center flex"
+                            >
+                                <FaEthereum />
+                            </button>
+                        </div>
                     </div>
                 </>
             )}

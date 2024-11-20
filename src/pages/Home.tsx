@@ -178,91 +178,72 @@ export const Home = () => {
     return (
         <>
             <NavBar />
-            {((!userToken && entryMode === 'signup') || (userToken && Object.keys(userNodes).length === 0)) && (
-                <div className="flex grow self-stretch">
-                    <div className={classNames(
-                        'flex flex-col place-items-center px-8 py-4 place-content-center self-stretch rounded-2xl bg-white/50 backdrop-blur-sm md:gap-6 gap-4 shadow-lg',
-                        {
-                            'grow': isMobile,
-                            'm-auto': !isMobile,
-                        },
-                    )}>
+            <div className="flex grow self-stretch">
+                <div className={classNames(
+                    'flex flex-col place-items-center place-content-center self-stretch rounded-3xl bg-white/50 backdrop-blur-sm shadow-lg',
+                    {
+                        'grow w-screen max-w-screen': isMobile,
+                        'max-w-lg m-auto': !isMobile,
+                    },
+                )}>
+                    <div className="flex gap-8 items-center p-8">
                         <img
-                            src="/favicon.png"
-                            className={classNames('shadow-lg rounded-xl', {
-                                'h-24 min-h-24 w-24 min-w-24': !isMobile,
-                                'h-16 min-h-16 w-16 min-w-16': isMobile,
-                            })}
-                        />
-                        {!userToken && (
-                            <>
-                                <div className="md:text-xl text-center">
-                                    Read and curate the best content from anywhere.
-                                </div>
-                            </>
-                        )}
-                        {userToken && isInitialNodeCheck ? (
-                            <StagedLoadingOverlay
-                                stages={{ checking: 'Checking your account...', kinode: 'Loading your kinode...' }}
-                                currentStage="checking"
-                                finalStage="kinode"
-                            />
-                        ) : (
-                            <SignupBox />
-                        )}
-                        {!userToken && (
-                            <>
-                                <div className="h-[1px] bg-black w-full" />
-                                <h4>Already have an account?</h4>
-                                <button
-                                    className="text-lg alt"
-                                    onClick={() => setEntryMode('login')}
-                                >
-                                    Sign in
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
-            {(!userToken && entryMode === 'login') && (
-                <div className="flex grow self-stretch">
-                    <div className={classNames(
-                        'flex flex-col place-items-center px-8 py-4 place-content-center self-stretch rounded-2xl bg-white/50 backdrop-blur-sm md:gap-6 gap-4 shadow-lg',
-                        {
-                            'grow': isMobile,
-                            'm-auto': !isMobile,
-                        },
-                    )}>
-                        <img
-                            src="/favicon.png"
-                            className={classNames('shadow-lg rounded-xl', {
-                                'h-24 min-h-24 w-24 min-w-24': !isMobile,
-                                'h-16 min-h-16 w-16 min-w-16': isMobile,
-                            })}
+                            src="/icons/mic-mini.svg"
+                            className={classNames('shadow-lg rounded-full p-4 bg-white flex justify-center items-center h-16 min-h-16 w-16 min-w-16')}
                         />
                         <div className="md:text-xl text-center">
                             Read and curate the best content from anywhere.
                         </div>
-                        <LoginBox />
-                        <div className="h-[1px] bg-black w-full" />
-                        <h4>Don't have an account?</h4>
-                        <button
-                            className="text-lg alt min-w-[220px]"
-                            onClick={() => setEntryMode('signup')}
-                        >
-                            Sign up
-                        </button>
-                        <button
-                            className="text-lg !bg-green border-green text-white flex items-center gap-2 min-w-[220px]"
-                            onClick={() => window.location.href = 'https://valet.uncentered.systems'}
-                        >
-                            <img src="/valet-logo.svg" className="w-6 h-6" />
-                            <span>Manage Node</span>
-                        </button>
+                    </div>
+                    <div className="flex flex-col items-center self-stretch grow bg-white p-8 rounded-b-3xl gap-8 items-stretch">
+                        {((!userToken && entryMode === 'signup') || (userToken && Object.keys(userNodes).length === 0)) && <>
+                            {userToken && isInitialNodeCheck ? (
+                                <StagedLoadingOverlay
+                                    stages={{ checking: 'Checking your account...', kinode: 'Loading your kinode...' }}
+                                    currentStage="checking"
+                                    finalStage="kinode"
+                                />
+                            ) : (
+                                <SignupBox />
+                            )}
+                            {!userToken && (
+                                <>
+                                    <div className="h-[1px] bg-black w-full" />
+                                    <div className="flex flex-col gap-4 items-stretch self-stretch">
+                                        <h4 className="self-center">Already have an account?</h4>
+                                        <button
+                                            className="text-lg alt"
+                                            onClick={() => setEntryMode('login')}
+                                        >
+                                            Sign in
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </>}
+                        {(!userToken && entryMode === 'login') && <>
+                            <LoginBox />
+                            <div className="h-[1px] bg-black w-full" />
+                            <div className="flex flex-col gap-4 items-stretch self-stretch">
+                                <h4 className="self-center">Don't have an account?</h4>
+                                <button
+                                    className="text-lg alt min-w-[220px]"
+                                    onClick={() => setEntryMode('signup')}
+                                >
+                                    Sign up
+                                </button>
+                                <button
+                                    className="text-lg !bg-green border-green text-white flex items-center gap-2 min-w-[220px]"
+                                    onClick={() => window.location.href = 'https://valet.uncentered.systems'}
+                                >
+                                    <img src="/valet-logo.svg" className="w-6 h-6" />
+                                    <span>Manage Node</span>
+                                </button>
+                            </div>
+                        </>}
                     </div>
                 </div>
-            )}
+            </div>
             {loadingStage && <StagedLoadingOverlay
                 stages={NODE_LOADING_STAGES}
                 currentStage={loadingStage}

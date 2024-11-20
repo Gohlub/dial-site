@@ -143,51 +143,55 @@ export const LoginBox = () => {
 
     return (
         <>
-            <div className="flex flex-col gap-4 items-center">
-                <h3 className="text-2xl">Login to Dial</h3>
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={loginPassword}
-                    onChange={(e) => onLoginPasswordChanged(e.target.value)}
-                    onKeyUp={(e) => {
-                        if (e.key === 'Enter') {
-                            onLoginWithEmail()
-                        }
-                    }}
-                />
-                <button
-                    className="text-lg self-stretch"
-                    onClick={onLoginWithEmail}
-                >
-                    Sign in
-                </button>
-                <div className="flex gap-4 grow self-stretch">
+            <div className="flex flex-col gap-8 items-stetch max-h-screen overflow-y-auto">
+                <h2 className="self-center text-3xl">Login to Dial</h2>
+                <div className="flex flex-col self-stretch items-stretch gap-4">
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={loginPassword}
+                        onChange={(e) => onLoginPasswordChanged(e.target.value)}
+                        onKeyUp={(e) => {
+                            if (e.key === 'Enter') {
+                                onLoginWithEmail()
+                            }
+                        }}
+                    />
+                </div>
+                <div className="flex flex-col self-stretch items-stretch gap-4">
                     <button
-                        onClick={redirectToX}
-                        className="grow bg-blue-500 text-lg border-blue-200 self-stretch gap-4 items-center flex"
+                        className="text-lg self-stretch"
+                        onClick={onLoginWithEmail}
                     >
-                        <FaXTwitter />
+                        Sign in
                     </button>
+                    <div className="flex gap-4 grow self-stretch">
+                        <button
+                            onClick={redirectToX}
+                            className="grow alt !text-black text-2xl self-stretch gap-4 items-center flex"
+                        >
+                            <FaXTwitter />
+                        </button>
+                        <button
+                            onClick={onSiweSignInClick}
+                            className="grow alt !text-black text-2xl self-stretch gap-4 items-center flex"
+                        >
+                            <FaEthereum />
+                        </button>
+                    </div>
                     <button
-                        onClick={onSiweSignInClick}
-                        className="grow bg-[#627EEA] text-lg border-[#627EEA] self-stretch gap-4 items-center flex"
+                        className="text-lg self-stretch alt"
+                        onClick={() => setForgotPasswordOpen(true)}
                     >
-                        <FaEthereum />
+                        Forgot Password?
                     </button>
                 </div>
-                <button
-                    className="text-lg self-stretch alt"
-                    onClick={() => setForgotPasswordOpen(true)}
-                >
-                    Forgot Password?
-                </button>
             </div>
             <ForgotPasswordModal
                 isOpen={forgotPasswordOpen}
