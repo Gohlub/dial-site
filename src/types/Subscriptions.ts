@@ -51,3 +51,14 @@ export interface ProductSubscription {
     comet_count: string
     product_type: string
 }
+
+export interface NodeSubscription {
+    subscription_id: number
+    start: string
+    end: string
+    periodicity: string
+    subscription_status: string
+    price: number
+    subscription_created_at: string
+    subscription_updated_at: string
+}

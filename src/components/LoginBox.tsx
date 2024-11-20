@@ -9,6 +9,7 @@ import { ethers } from 'ethers'
 import { SiweMessage } from 'siwe'
 import { loginToNode, deriveNodePassword } from '../utilities/auth'
 import { NodeSelectionModal } from './NodeSelectionModal'
+import { getFirstNode } from '../types/UserNode'
 
 export const LoginBox = () => {
     const {
@@ -40,10 +41,15 @@ export const LoginBox = () => {
         setLoadingStage('kinode')
         const success = await loginWithEmail(loginEmail, loginPasswordHash)
         if (success) {
-            if (userNodes && userNodes.length > 0) {
-                if (userNodes.length === 1) {
+            if (Object.keys(userNodes).length > 0) {
+                if (Object.keys(userNodes).length === 1) {
                     try {
-                        await loginToNode(userNodes[0], userNodes[0].kinode_password)
+                        const node = getFirstNode(userNodes)
+                        if (node?.kinode_password) {
+                            await loginToNode(node, node.kinode_password)
+                        } else {
+                            addClientAlert('No password found for node. Please contact support.')
+                        }
                     } catch (error) {
                         addClientAlert('Failed to login to node: ' + (error as Error).message)
                     }
@@ -103,15 +109,20 @@ export const LoginBox = () => {
             const reginResult = await registerSiwe(messageToSign, signature)
             if (reginResult?.jwt) {
                 setSiweToken(reginResult.jwt)
-                if (userNodes && userNodes.length > 0 && userInfo?.id) {
+                if (Object.keys(userNodes).length > 0 && userInfo?.id) {
                     try {
                         const derivedPassword = await deriveNodePassword(
                             userInfo.id.toString(),
                             'siwe'
                         );
 
-                        if (userNodes.length === 1) {
-                            await loginToNode(userNodes[0], userNodes[0].kinode_password || derivedPassword)
+                        if (Object.keys(userNodes).length === 1) {
+                            const node = getFirstNode(userNodes)
+                            if (node?.kinode_password) {
+                                await loginToNode(node, node.kinode_password || derivedPassword)
+                            } else {
+                                addClientAlert('No password found for node. Please contact support.')
+                            }
                         } else {
                             setNodeSelectionOpen(true)
                         }
@@ -173,7 +184,7 @@ export const LoginBox = () => {
             <NodeSelectionModal
                 isOpen={nodeSelectionOpen}
                 onClose={() => setNodeSelectionOpen(false)}
-                nodes={userNodes || []}
+                nodes={Object.values(userNodes)}
                 passwordHash={loginPasswordHash}
             />
         </>

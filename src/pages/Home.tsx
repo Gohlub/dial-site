@@ -13,6 +13,7 @@ import { NODE_LOADING_STAGES } from '../types/nodeLoadingStages'
 import { deriveNodePassword, prepend0x, } from '../utilities/auth'
 import 'react-toastify/dist/ReactToastify.css'
 import { LandingPage } from '../components/LandingPage'
+import { getFirstNode } from '../types/UserNode'
 dayjs.extend(relativeTime)
 
 export const Home = () => {
@@ -71,16 +72,17 @@ export const Home = () => {
     useEffect(() => {
         const handleNodeStatus = async () => {
             console.log('handle node status')
-            if (userNodes?.[0]) {
+            if (Object.keys(userNodes).length > 0) {
                 console.log('user nodes', userNodes)
-                if (userNodes[0].ship_type === 'kinode') {
+                const node = getFirstNode(userNodes)
+                if (node?.ship_type === 'kinode') {
                     console.log('user info', userInfo)
                     if (userInfo?.id) {
                         try {
                             let password: string | null = null
 
                             if (loginMode === LoginMode.Email) {
-                                password = userPasswordHash
+                                password = node.kinode_password || userPasswordHash
                             } else {
                                 const serviceType = loginMode === LoginMode.X ? 'x' : 'siwe';
                                 password = await deriveNodePassword(
@@ -93,7 +95,7 @@ export const Home = () => {
                             if (password) {
                                 password = prepend0x(password)
 
-                                const nodeUrl = userNodes[0].link.replace('http://', 'https://');
+                                const nodeUrl = node.link.replace('http://', 'https://');
 
                                 const form = document.createElement('form');
                                 form.method = 'POST';
@@ -111,13 +113,14 @@ export const Home = () => {
                                 form.submit();
                             } else {
                                 addClientAlert('Failed to derive node password', 'error')
+                                setLoadingStage()
                             }
                         } catch (error) {
                             addClientAlert('Failed to login to node: ' + (error as Error).message)
                         }
                     }
                 } else {
-                    setLoadingStage(userNodes[0].ship_type)
+                    setLoadingStage(node?.ship_type || '')
                 }
             } else {
                 setIsInitialNodeCheck(false)
@@ -151,15 +154,12 @@ export const Home = () => {
     }, [userToken, userNodes, loginMode])
 
     useEffect(() => {
-        if (userNodes) {
+        const node = getFirstNode(userNodes)
+        if (node) {
             setHasFetchedUserInfo(true)
 
-            if (userNodes.length > 0) {
-                const firstNode = userNodes[0]
-                if (firstNode?.link && firstNode.ship_type === 'kinode') {
-                    setLoadingStage('kinode')
-
-                }
+            if (node.link && node.ship_type === 'kinode') {
+                setLoadingStage('kinode')
             }
         }
     }, [userNodes])
@@ -178,7 +178,7 @@ export const Home = () => {
     return (
         <>
             <NavBar />
-            {((!userToken && entryMode === 'signup') || (userToken && userNodes?.length === 0)) && (
+            {((!userToken && entryMode === 'signup') || (userToken && Object.keys(userNodes).length === 0)) && (
                 <div className="flex grow self-stretch">
                     <div className={classNames(
                         'flex flex-col place-items-center px-8 py-4 place-content-center self-stretch rounded-2xl bg-white/50 backdrop-blur-sm md:gap-6 gap-4 shadow-lg',

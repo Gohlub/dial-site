@@ -36,9 +36,7 @@ export async function deriveNodePassword(
 
 export const loginToNode = async (node: UserNode, passwordHash: string) => {
     const { addClientAlert, setLoadingStage } = useDialSiteStore.getState()
-    if (!passwordHash.startsWith('0x')) {
-        passwordHash = '0x' + passwordHash
-    }
+    passwordHash = prepend0x(passwordHash)
 
     if (node.ship_status !== 'active') {
         const errorMsg = `Cannot login: node status is ${node.ship_status}`

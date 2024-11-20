@@ -11,6 +11,7 @@ import { SiweMessage } from 'siwe'
 import { ethers } from 'ethers'
 import { OPTIMISM_CHAIN_ID, switchToOptimism } from '../utilities/eth'
 import { loginToNode } from '../utilities/auth'
+import { getFirstNode } from '../types/UserNode'
 
 export const SignupBox = () => {
     const {
@@ -195,29 +196,32 @@ export const SignupBox = () => {
 
     useEffect(() => {
         if (signupStage === 'credentials') {
-            if (loginMode === LoginMode.X && xToken && userNodes.length === 0) {
+            if (loginMode === LoginMode.X && xToken && Object.keys(userNodes).length === 0) {
                 setSignupStage('node-name')
                 if (!signupPasswordHash) {
                     sha256(xToken).then(hashHex => {
                         setSignupPasswordHash(hashHex)
                     })
                 }
-            } else if (loginMode === LoginMode.SIWE && siweToken && userNodes.length === 0) {
+            } else if (loginMode === LoginMode.SIWE && siweToken && Object.keys(userNodes).length === 0) {
                 setSignupStage('node-name')
                 if (!signupPasswordHash) {
                     sha256(siweToken).then(hashHex => {
                         setSignupPasswordHash(hashHex)
                     })
                 }
-            } else if (loginMode === LoginMode.Email && emailToken && userNodes.length === 0) {
+            } else if (loginMode === LoginMode.Email && emailToken && Object.keys(userNodes).length === 0) {
                 setSignupStage('node-name')
                 setLoadingStage()
                 sha256(emailToken).then(hashHex => {
                     setSignupPasswordHash(userPasswordHash || hashHex)
                 })
             }
-        } else if (userNodes.length > 0 && userNodes[0].kinode_password) {
-            setSignupPasswordHash(userNodes[0].kinode_password)
+        } else if (Object.keys(userNodes).length > 0) {
+            const node = getFirstNode(userNodes)
+            if (node?.kinode_password) {
+                setSignupPasswordHash(node.kinode_password)
+            }
         }
     }, [loginMode, signupStage, siweToken, emailToken, xToken, userNodes])
 
@@ -270,11 +274,16 @@ export const SignupBox = () => {
         if (success) {
             setLoadingStage('preload')
             await getUserNodes()
-            if (userNodes?.[0]) {
-                try {
-                    await loginToNode(userNodes[0], userNodes[0].kinode_password || signupPasswordHash)
-                } catch (error) {
-                    addClientAlert(`Node created but login failed: ${error}. Please try logging in manually.`, 'error')
+            if (Object.keys(userNodes).length > 0) {
+                const node = getFirstNode(userNodes)
+                if (node) {
+                    try {
+                        await loginToNode(node, node.kinode_password || signupPasswordHash)
+                    } catch (error) {
+                        addClientAlert(`Node created but login failed: ${error}. Please try logging in manually.`, 'error')
+                    }
+                } else {
+                    addClientAlert('No node found. Please contact support.', 'error')
                 }
             }
         } else {
@@ -297,7 +306,7 @@ export const SignupBox = () => {
                 addClientAlert('No free trial product found (E#1).')
                 return
             }
-            const freeTrial = freeTrialProduct.price_options.find(p => p.amount === 0)
+            const freeTrial = freeTrialProduct.price_options.find((p: { amount: number }) => p.amount === 0)
             if (!freeTrial) {
                 addClientAlert('No free trial product found (E#2).')
                 return

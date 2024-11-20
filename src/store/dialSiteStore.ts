@@ -2,13 +2,13 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import axios from 'axios'
 import { UserInfo, isUserInfoValid } from '../types/UserInfo'
-import { UserNode } from '../types/UserNode'
+import { isUserNodesInfo, UserNode } from '../types/UserNode'
 import { middleware, MiddlewareResult } from '../utilities/middleware'
-import { ProductSubscription } from '../types/Subscriptions'
 import { toast, ToastOptions } from 'react-toastify'
 import { ServerAlert } from '../types/ServerAlert'
 import { ClientAlert } from '../types/ClientAlert'
 import { prepend0x } from '../utilities/auth'
+import { ProductSubscription } from '../types/Subscriptions'
 
 
 export enum LoginMode {
@@ -37,8 +37,8 @@ export interface DialSiteStore {
     userInfo: UserInfo | null
     setUserInfo: (userInfo: UserInfo | null) => void
     getUserNodes: (existingTimeout?: NodeJS.Timeout) => Promise<void>
-    userNodes: UserNode[]
-    setUserNodes: (nodes: UserNode[]) => void
+    userNodes: Record<number, UserNode>
+    setUserNodes: (nodes: Record<number, UserNode>) => void
     viteMode: string
     onSignOut: () => void
     addNodeModalOpen: boolean
@@ -107,6 +107,7 @@ export interface DialSiteStore {
     setUserPasswordHash: (hash: string | null) => void
     hasSeenLanding: boolean
     setHasSeenLanding: (hasSeen: boolean) => void
+    getNodeDetails: (id: number) => Promise<UserNode | null>
 }
 
 const convertAlertClassToToastType = (alertClass: string) => {
@@ -370,17 +371,35 @@ const useDialSiteStore = create<DialSiteStore>()(
                     )
                     return
                 }
-                if (
-                    result.data &&
-                    Array.isArray(result.data.nodes) &&
-                    JSON.stringify(get().userNodes) !== JSON.stringify(result.data.nodes)
-                ) {
-                    set({ userNodes: result.data.nodes })
+                if (isUserNodesInfo(result.data)) {
+                    const nodesMap: Record<number, UserNode> = {}
+                    for (const node of result.data.nodes) {
+                        nodesMap[node.id] = node
+                        const details = await get().getNodeDetails(node.id)
+                        if (details) {
+                            nodesMap[node.id] = details
+                        }
+                    }
+                    set({ userNodes: nodesMap })
                 } else if (!existingTimeout) {
                     const timeout = setTimeout(() => {
                         get().getUserNodes(timeout)
                     }, 10000)
                 }
+            },
+            getNodeDetails: async (id: number) => {
+                const { getTokenViaLoginMode } = get()
+                const token = getTokenViaLoginMode()
+                if (!token) return null
+                const result = await middleware(axios.get(`/api/get-user-kinode/${id}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                }))
+                const { shouldReturn } = handleMaintenanceState(result, get())
+                if (shouldReturn) return null
+                return result.data
             },
             checkProducts: async (locale: string) => {
                 const { addClientAlert } = get()
@@ -458,13 +477,13 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
                 return !result.error
             },
-            userNodes: [],
-            setUserNodes: (userNodes: UserNode[]) => set({ userNodes }),
+            userNodes: {},
+            setUserNodes: (userNodes: Record<number, UserNode>) => set({ userNodes }),
             onSignOut: () => {
                 const { setEmailToken: setToken, setUserInfo, setUserNodes } = get()
                 setToken('')
                 setUserInfo(null)
-                setUserNodes([])
+                setUserNodes({})
             },
             addNodeModalOpen: false,
             setAddNodeModalOpen: (addNodeModalOpen: boolean) => {
