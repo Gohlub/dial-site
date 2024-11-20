@@ -10,7 +10,7 @@ import StagedLoadingOverlay from './StagedLoadingOverlay'
 import { SiweMessage } from 'siwe'
 import { ethers } from 'ethers'
 import { OPTIMISM_CHAIN_ID, switchToOptimism } from '../utilities/eth'
-import { deriveNodePassword, loginToNode } from '../utilities/auth'
+import { loginToNode } from '../utilities/auth'
 
 export const SignupBox = () => {
     const {
