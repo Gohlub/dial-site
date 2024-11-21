@@ -109,29 +109,35 @@ export const LoginBox = () => {
             const signature = await signer.signMessage(messageToSign)
 
             const reginResult = await registerSiwe(messageToSign, signature)
-            if (reginResult?.jwt) {
-                setSiweToken(reginResult.jwt)
-                if (Object.keys(userNodes).length > 0 && userInfo?.id) {
-                    try {
-                        const derivedPassword = await deriveNodePassword(
-                            userInfo.id.toString(),
-                            'siwe'
-                        );
+            if (!reginResult?.jwt) {
+                addClientAlert('Failed to sign in with Ethereum. Please try again.')
+                return
+            }
 
-                        if (Object.keys(userNodes).length === 1) {
-                            const node = getFirstDialNode(userNodes)
-                            if (node?.kinode_password) {
-                                await loginToNode(node, node.kinode_password || derivedPassword)
-                            } else {
-                                addClientAlert('No password found for node. Please contact support.')
-                            }
-                        } else {
-                            setNodeSelectionOpen(true)
-                        }
-                    } catch (error) {
-                        addClientAlert('Failed to login to node: ' + (error as Error).message)
+            setSiweToken(reginResult.jwt)
+            if (!userInfo?.id) {
+                addClientAlert('No user ID found. Please contact support.')
+                return
+            }
+
+            try {
+                const derivedPassword = await deriveNodePassword(
+                    userInfo.id.toString(),
+                    'siwe'
+                );
+
+                if (Object.keys(userNodes).length === 1) {
+                    const node = getFirstDialNode(userNodes)
+                    if (node?.kinode_password) {
+                        await loginToNode(node, node.kinode_password || derivedPassword)
+                    } else {
+                        addClientAlert('No password found for node. Please contact support.')
                     }
+                } else {
+                    setNodeSelectionOpen(true)
                 }
+            } catch (error) {
+                addClientAlert('Failed to login to node: ' + (error as Error).message)
             }
         } catch (error) {
             console.error(error)

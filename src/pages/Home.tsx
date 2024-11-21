@@ -48,7 +48,7 @@ export const Home = () => {
 
     const [entryMode, setEntryMode] = useState<'login' | 'signup'>('login')
     const [userToken, setUserToken] = useState<string | null>(null)
-    const [ourDialNode, setOurDialNode] = useState<UserNode | null>(null)
+    const [_ourDialNode, setOurDialNode] = useState<UserNode | null>(null)
     const [isInitialNodeCheck, setIsInitialNodeCheck] = useState(true)
 
     useEffect(() => {
