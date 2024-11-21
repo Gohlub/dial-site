@@ -13,7 +13,7 @@ import { NODE_LOADING_STAGES } from '../types/nodeLoadingStages'
 import { deriveNodePassword, prepend0x, } from '../utilities/auth'
 import 'react-toastify/dist/ReactToastify.css'
 import { LandingPage } from '../components/LandingPage'
-import { getFirstNode } from '../types/UserNode'
+import { getFirstDialNode, UserNode } from '../types/UserNode'
 dayjs.extend(relativeTime)
 
 export const Home = () => {
@@ -39,7 +39,6 @@ export const Home = () => {
         loadingStage,
         setLoadingStage,
         addClientAlert,
-        userPasswordHash,
         hasSeenLanding,
         setHasSeenLanding,
     } = useDialSiteStore()
@@ -49,7 +48,7 @@ export const Home = () => {
 
     const [entryMode, setEntryMode] = useState<'login' | 'signup'>('login')
     const [userToken, setUserToken] = useState<string | null>(null)
-    const [_hasFetchedUserInfo, setHasFetchedUserInfo] = useState(false)
+    const [ourDialNode, setOurDialNode] = useState<UserNode | null>(null)
     const [isInitialNodeCheck, setIsInitialNodeCheck] = useState(true)
 
     useEffect(() => {
@@ -73,59 +72,65 @@ export const Home = () => {
     useEffect(() => {
         const handleNodeStatus = async () => {
             console.log('handle node status')
-            if (Object.keys(userNodes).length > 0) {
-                console.log('user nodes', userNodes)
-                const node = getFirstNode(userNodes)
-                if (node?.ship_type === 'kinode') {
-                    console.log('user info', userInfo)
-                    if (userInfo?.id) {
-                        try {
-                            let password: string | null = null
 
-                            if (loginMode === LoginMode.Email) {
-                                password = node.kinode_password || userPasswordHash
-                            } else {
-                                const serviceType = loginMode === LoginMode.X ? 'x' : 'siwe';
-                                password = node.kinode_password || await deriveNodePassword(
-                                    userInfo.id.toString(),
-                                    serviceType
-                                );
-                            }
-                            console.log('password', password)
-
-                            if (password) {
-                                password = prepend0x(password)
-
-                                const nodeUrl = node.link.replace('http://', 'https://');
-
-                                const form = document.createElement('form');
-                                form.method = 'POST';
-                                form.action = `${nodeUrl}/login?redirect=${encodeURIComponent('/curator:dial:uncentered.os')}`;
-                                form.enctype = 'text/plain';
-
-                                const field = document.createElement('input');
-                                field.type = 'hidden';
-                                field.name = '{"password_hash":"' + password + '","subdomain":"", "';
-                                field.value = '": "" }';
-                                form.appendChild(field);
-
-                                document.body.appendChild(form);
-                                console.log('Form submission:', field.name + field.value);
-                                form.submit();
-                            } else {
-                                addClientAlert('Failed to derive node password', 'error')
-                                setLoadingStage()
-                            }
-                        } catch (error) {
-                            addClientAlert('Failed to login to node: ' + (error as Error).message)
-                        }
-                    }
-                } else {
-                    setLoadingStage(node?.ship_type || '')
-                }
-            } else {
+            const node = getFirstDialNode(userNodes)
+            if (!node) {
                 setIsInitialNodeCheck(false)
                 setEntryMode('signup')
+                return
+            }
+
+            console.log('user nodes', userNodes)
+
+            if (node.ship_type !== 'kinode') {
+                setLoadingStage(node.ship_type || '')
+                return
+            }
+
+            console.log('user info', userInfo)
+            try {
+                let password: string | null = node.kinode_password || null
+
+                if (loginMode === LoginMode.Email) {
+                    password ||= node.kinode_password || null
+                } else if (userInfo?.id) {
+                    const serviceType = loginMode === LoginMode.X ? 'x' : 'siwe';
+                    password ||= node.kinode_password || await deriveNodePassword(
+                        userInfo.id.toString(),
+                        serviceType
+                    );
+                } else {
+                    addClientAlert('No user ID found. Please contact support.')
+                    setLoadingStage()
+                    return
+                }
+                console.log('password', password)
+
+                if (password) {
+                    password = prepend0x(password)
+
+                    const nodeUrl = node.link.replace('http://', 'https://');
+
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `${nodeUrl}/login?redirect=${encodeURIComponent('/curator:dial:uncentered.os')}`;
+                    form.enctype = 'text/plain';
+
+                    const field = document.createElement('input');
+                    field.type = 'hidden';
+                    field.name = '{"password_hash":"' + password + '","subdomain":"", "';
+                    field.value = '": "" }';
+                    form.appendChild(field);
+
+                    document.body.appendChild(form);
+                    console.log('Form submission:', field.name + field.value);
+                    form.submit();
+                } else {
+                    addClientAlert('Failed to derive node password', 'error')
+                    setLoadingStage()
+                }
+            } catch (error) {
+                addClientAlert('Failed to login to node: ' + (error as Error).message)
             }
         }
 
@@ -155,9 +160,9 @@ export const Home = () => {
     }, [userToken, userNodes, loginMode])
 
     useEffect(() => {
-        const node = getFirstNode(userNodes)
+        const node = getFirstDialNode(userNodes)
         if (node) {
-            setHasFetchedUserInfo(true)
+            setOurDialNode(node)
 
             if (node.link && node.ship_type === 'kinode') {
                 setLoadingStage('kinode')
@@ -179,7 +184,7 @@ export const Home = () => {
     return (
         <>
             <NavBar />
-            <div className="flex grow self-stretch">
+            <div className="home-page flex grow self-stretch">
                 <div className={classNames(
                     'flex flex-col place-items-center place-content-center self-stretch rounded-3xl bg-white/50 backdrop-blur-sm shadow-lg',
                     {
@@ -197,7 +202,7 @@ export const Home = () => {
                         </div>
                     </div>
                     <div className="flex flex-col items-center self-stretch grow bg-white p-8 rounded-b-3xl gap-8 items-stretch">
-                        {((!userToken && entryMode === 'signup') || (userToken && Object.keys(userNodes).length === 0)) && <>
+                        {((!userToken && entryMode === 'signup') || (userToken)) && <>
                             {userToken && isInitialNodeCheck ? (
                                 <StagedLoadingOverlay
                                     stages={{ checking: 'Checking your account...', kinode: 'Loading your kinode...' }}

@@ -11,7 +11,7 @@ export default function NavBar() {
     }}>Clear storage</button>
 
     return (
-        <div className="flex items-center gap-4 p-4 self-stretch bg-white shadow-xl">
+        <div className="flex items-center gap-4 p-4 self-stretch bg-white shadow-xl z-60">
             <Link
                 to="/"
                 className="px-4 py-2 decoration-none hover:underline hover:opacity-70 font-normal"

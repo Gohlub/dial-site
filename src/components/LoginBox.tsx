@@ -9,7 +9,7 @@ import { ethers } from 'ethers'
 import { SiweMessage } from 'siwe'
 import { loginToNode, deriveNodePassword } from '../utilities/auth'
 import { NodeSelectionModal } from './NodeSelectionModal'
-import { getFirstNode } from '../types/UserNode'
+import { getFirstDialNode } from '../types/UserNode'
 import ForgotPasswordModal from './ForgotPasswordModal'
 
 export const LoginBox = () => {
@@ -46,7 +46,7 @@ export const LoginBox = () => {
             if (Object.keys(userNodes).length > 0) {
                 if (Object.keys(userNodes).length === 1) {
                     try {
-                        const node = getFirstNode(userNodes)
+                        const node = getFirstDialNode(userNodes)
                         if (node?.kinode_password) {
                             await loginToNode(node, node.kinode_password)
                         } else {
@@ -119,7 +119,7 @@ export const LoginBox = () => {
                         );
 
                         if (Object.keys(userNodes).length === 1) {
-                            const node = getFirstNode(userNodes)
+                            const node = getFirstDialNode(userNodes)
                             if (node?.kinode_password) {
                                 await loginToNode(node, node.kinode_password || derivedPassword)
                             } else {
@@ -143,7 +143,7 @@ export const LoginBox = () => {
 
     return (
         <>
-            <div className="flex flex-col gap-8 items-stetch max-h-screen overflow-y-auto">
+            <div className="login-box flex flex-col gap-8 items-stetch max-h-screen overflow-y-auto">
                 <h2 className="self-center text-3xl">Login to Dial</h2>
                 <div className="flex flex-col self-stretch items-stretch gap-4">
                     <input

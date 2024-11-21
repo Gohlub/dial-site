@@ -41,9 +41,8 @@ export function isUserNodesInfo(data: any): data is UserNodesInfo {
     return data && Array.isArray(data.nodes)
 }
 
-export function getFirstNode(nodes: Record<number, UserNode>): UserNode | null {
-    const nodeId = Object.keys(nodes || {})[0]
-    if (!nodeId) return null
-    const node = nodes[nodeId as unknown as number] as UserNode
+export function getFirstDialNode(nodes: Record<number, UserNode>): UserNode | null {
+    const node = Object.values(nodes || {})
+        .find(node => node.product_id === 1)
     return node || null
 }

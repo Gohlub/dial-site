@@ -11,7 +11,7 @@ import { SiweMessage } from 'siwe'
 import { ethers } from 'ethers'
 import { OPTIMISM_CHAIN_ID, switchToOptimism } from '../utilities/eth'
 import { loginToNode } from '../utilities/auth'
-import { getFirstNode } from '../types/UserNode'
+import { getFirstDialNode } from '../types/UserNode'
 
 export const SignupBox = () => {
     const {
@@ -196,21 +196,21 @@ export const SignupBox = () => {
 
     useEffect(() => {
         if (signupStage === 'credentials') {
-            if (loginMode === LoginMode.X && xToken && Object.keys(userNodes).length === 0) {
+            if (loginMode === LoginMode.X && xToken && !getFirstDialNode(userNodes)) {
                 setSignupStage('node-name')
                 if (!signupPasswordHash) {
                     sha256(xToken).then(hashHex => {
                         setSignupPasswordHash(hashHex)
                     })
                 }
-            } else if (loginMode === LoginMode.SIWE && siweToken && Object.keys(userNodes).length === 0) {
+            } else if (loginMode === LoginMode.SIWE && siweToken && !getFirstDialNode(userNodes)) {
                 setSignupStage('node-name')
                 if (!signupPasswordHash) {
                     sha256(siweToken).then(hashHex => {
                         setSignupPasswordHash(hashHex)
                     })
                 }
-            } else if (loginMode === LoginMode.Email && emailToken && Object.keys(userNodes).length === 0) {
+            } else if (loginMode === LoginMode.Email && emailToken && !getFirstDialNode(userNodes)) {
                 setSignupStage('node-name')
                 setLoadingStage()
                 sha256(emailToken).then(hashHex => {
@@ -218,7 +218,7 @@ export const SignupBox = () => {
                 })
             }
         } else if (Object.keys(userNodes).length > 0) {
-            const node = getFirstNode(userNodes)
+            const node = getFirstDialNode(userNodes)
             if (node?.kinode_password) {
                 setSignupPasswordHash(node.kinode_password)
             }
@@ -275,7 +275,7 @@ export const SignupBox = () => {
             setLoadingStage('preload')
             await getUserNodes()
             if (Object.keys(userNodes).length > 0) {
-                const node = getFirstNode(userNodes)
+                const node = getFirstDialNode(userNodes)
                 if (node) {
                     try {
                         await loginToNode(node, node.kinode_password || signupPasswordHash)
@@ -355,7 +355,7 @@ export const SignupBox = () => {
     });
 
     return (
-        <div className={classNames("flex flex-col gap-8 items-stetch max-h-screen overflow-y-auto", {
+        <div className={classNames("signup-box flex flex-col gap-8 items-stetch max-h-screen overflow-y-auto", {
             ' grow self-stretch place-items-center place-content-center': signupStage !== 'credentials',
         })}>
             {loginMode !== LoginMode.None && (

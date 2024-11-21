@@ -18,7 +18,7 @@ export default function StagedLoadingOverlay({
         .indexOf(currentStage || '')
 
     return (
-        <div className="fixed top-0 left-0 bg-white/20 w-full h-full flex flex-col place-items-center place-content-center gap-8">
+        <div className="fixed top-0 left-0 bg-white/20 w-full h-full flex flex-col place-items-center place-content-center gap-8 backdrop-blur-md">
             <div className="flex flex-col place-items-center place-content-center gap-4 bg-white rounded-2xl p-8 shadow-xl">
                 <FaCircleNotch className="animate-spin text-4xl" />
                 <h1 className="text-4xl md:min-w-[300px]">
