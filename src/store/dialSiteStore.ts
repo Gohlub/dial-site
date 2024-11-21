@@ -480,10 +480,8 @@ const useDialSiteStore = create<DialSiteStore>()(
             userNodes: {},
             setUserNodes: (userNodes: Record<number, UserNode>) => set({ userNodes }),
             onSignOut: () => {
-                const { setEmailToken: setToken, setUserInfo, setUserNodes } = get()
-                setToken('')
-                setUserInfo(null)
-                setUserNodes({})
+                localStorage.clear()
+                sessionStorage.clear()
             },
             addNodeModalOpen: false,
             setAddNodeModalOpen: (addNodeModalOpen: boolean) => {

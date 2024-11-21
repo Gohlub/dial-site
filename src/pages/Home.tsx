@@ -20,6 +20,7 @@ export const Home = () => {
 
     const {
         getServerAlerts,
+        onSignOut,
         xToken,
         siweToken,
         emailToken,
@@ -261,6 +262,16 @@ export const Home = () => {
                     </div>
                 </div>
             )}
+            {userToken && <button
+                onClick={() => {
+                    onSignOut()
+                    setUserToken(null)
+                    window.location.reload()
+                }}
+                className="fixed bottom-4 right-4 text-lg alt z-50"
+            >
+                Sign out
+            </button>}
         </>
     )
 }
