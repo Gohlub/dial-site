@@ -10,7 +10,6 @@ import StagedLoadingOverlay from './StagedLoadingOverlay'
 import { SiweMessage } from 'siwe'
 import { ethers } from 'ethers'
 import { OPTIMISM_CHAIN_ID, switchToOptimism } from '../utilities/eth'
-import { loginToNode } from '../utilities/auth'
 import { getFirstDialNode } from '../types/UserNode'
 
 export const SignupBox = () => {
@@ -22,14 +21,12 @@ export const SignupBox = () => {
         setPendingSubscription,
         redirectToX,
         checkIsNodeAvailable,
-        bootNode,
         checkProducts,
         purchaseProduct,
         addContactEmail,
         assignSubscription,
         userNodes,
         userInfo,
-        getUserNodes,
         addClientAlert,
         getSiweNonce,
         siweNonce,
@@ -86,7 +83,6 @@ export const SignupBox = () => {
         'purchase-free-trial': 'Purchasing free trial...',
         'assign-subscription': 'Assigning subscription...',
         'add-contact-email': 'Adding contact email...',
-        'boot-node': 'Booting node...',
         'complete': 'Account created!',
     }
 
@@ -261,40 +257,6 @@ export const SignupBox = () => {
         debouncedNodeNameCheck(signupNodeName)
     }, [signupNodeName])
 
-    const onBootNode = async () => {
-        if (loginMode === LoginMode.Email && (signupPassword.length < 8 || signupPasswordHash !== signupConfirmPasswordHash)) {
-            addClientAlert(
-                'Password must be at least 8 characters long, and passwords must match.',
-                'error',
-            )
-            return false
-        }
-        setLoading(true)
-        const { success, error } = await bootNode(signupNodeName, signupPasswordHash)
-        if (success) {
-            setLoadingStage('preload')
-            await getUserNodes()
-            if (Object.keys(userNodes).length > 0) {
-                const node = getFirstDialNode(userNodes)
-                if (node) {
-                    try {
-                        await loginToNode(node, node.kinode_password || signupPasswordHash)
-                    } catch (error) {
-                        addClientAlert(`Node created but login failed: ${error}. Please try logging in manually.`, 'error')
-                    }
-                } else {
-                    addClientAlert('No node found. Please contact support.', 'error')
-                }
-            }
-        } else {
-            addClientAlert(`Something went wrong: ${error}. Please try again.`, 'error')
-            return false
-        }
-        setLoading(false)
-        console.log({ success, error })
-        return true
-    }
-
     const onPurchaseFreeTrial = async () => {
         setInitializationStage('check-products')
         let subscription: { subscriptionId: number, message: string } | null = pendingSubscription
@@ -335,11 +297,7 @@ export const SignupBox = () => {
                 setHasPurchasedFreeTrial(true)
             }
         }
-        setInitializationStage('boot-node')
-        const bootSuccess = await onBootNode()
-        if (bootSuccess) {
-            setInitializationStage('complete')
-        }
+        setInitializationStage('complete')
         setLoading(false)
     }
 

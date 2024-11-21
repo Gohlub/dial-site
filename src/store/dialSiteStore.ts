@@ -49,10 +49,6 @@ export interface DialSiteStore {
     resetPasswordModalOpen: boolean
     setResetPasswordModalOpen: (resetPasswordModalOpen: boolean) => void
     checkIsNodeAvailable: (node: string) => Promise<boolean>
-    bootNode: (
-        kinodeName: string,
-        passwordHash: string,
-    ) => Promise<{ success: boolean; error: boolean | string }>
     resetNodePassword: (
         node: UserNode,
         passwordHash: string,
@@ -578,57 +574,6 @@ const useDialSiteStore = create<DialSiteStore>()(
                     return true
                 }
                 return false
-            },
-            bootNode: async (kinodeName: string, passwordHash: string) => {
-                const {
-                    getTokenViaLoginMode,
-                    onSignOut,
-                    addClientAlert,
-                } = get()
-                const token = getTokenViaLoginMode()
-                if (!token)
-                    return {
-                        success: false,
-                        error: 'Token is required. Please log in.',
-                    }
-                passwordHash = prepend0x(passwordHash)
-                if (kinodeName.includes('.')) {
-                    kinodeName = kinodeName.split('.')[0]
-                }
-                const headers = {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                }
-                console.log({ headers })
-                const result = await middleware(
-                    axios.post(
-                        `/api/free-kinode-eligibility-boot`,
-                        {
-                            productId: 2,
-                            kinodeName,
-                            kinodePassword: passwordHash,
-                        },
-                        { headers },
-                    ),
-                )
-
-                const { shouldReturn } = handleMaintenanceState(result, get())
-                if (shouldReturn) return { success: false, error: 'Server Maintenance in Progress' }
-
-                if (result.error) {
-                    if (result.loginAgain) {
-                        addClientAlert('Your session has timed out. Please log in.', 'error')
-                        onSignOut()
-                    }
-
-                    return { success: false, error: result.message }
-                }
-                return {
-                    success:
-                        Boolean(result.data.eligible) ||
-                        Boolean(result.data.message),
-                    error: result.data.reason || false,
-                }
             },
             resetNodePassword: async (node: UserNode, passwordHash: string) => {
                 const {
