@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import OperatorLogin from './pages/OperatorLogin'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { SignOut } from './pages/SignOut'
 
 function App() {
     return (
@@ -31,6 +32,7 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
+                    <Route path="/signout" element={<SignOut />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </BrowserRouter>
