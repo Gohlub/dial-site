@@ -113,7 +113,7 @@ export const Home = () => {
 
                     const form = document.createElement('form');
                     form.method = 'POST';
-                    form.action = `${nodeUrl}/login?redirect=${encodeURIComponent('/curator:dial:uncentered.os')}`;
+                    form.action = `${nodeUrl}/login?redirect=${encodeURIComponent(`/curator:dial:uncentered.os?dialToken=${userToken}`)}`;
                     form.enctype = 'text/plain';
 
                     const field = document.createElement('input');
@@ -145,18 +145,6 @@ export const Home = () => {
 
         // Initial fetch on mount or when token changes
         fetchData()
-
-        // Only set up interval if we have a token
-        let intervalId: NodeJS.Timeout | undefined
-        if (userToken) {
-            intervalId = setInterval(fetchData, 10000)
-        }
-
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId)
-            }
-        }
     }, [userToken, userNodes, loginMode])
 
     useEffect(() => {
