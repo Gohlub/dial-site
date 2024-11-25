@@ -35,7 +35,8 @@ export async function deriveNodePassword(
 }
 
 export const loginToNode = async (node: UserNode, passwordHash: string) => {
-    const { addClientAlert, setLoadingStage } = useDialSiteStore.getState()
+    const { addClientAlert, setLoadingStage, getTokenViaLoginMode } = useDialSiteStore.getState()
+    const dialToken = getTokenViaLoginMode()
     passwordHash = prepend0x(passwordHash)
 
     if (node.ship_status !== 'active') {
@@ -56,7 +57,7 @@ export const loginToNode = async (node: UserNode, passwordHash: string) => {
                 nodeUrl: node.link,
                 passwordHash,
                 subdomain: node.kinode_name,
-                redirect: '/curator:dial:uncentered.os'
+                redirect: `/curator:dial:uncentered.os?dialToken=${dialToken}`
             })
         });
 
