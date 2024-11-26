@@ -59,7 +59,7 @@ export interface DialSiteStore {
     setExpectedAvailabilityDate: (
         expectedAvailabilityDate: number | null,
     ) => void
-    addClientAlert: (
+    addToast: (
         message: string | ServerAlert | ClientAlert,
         type?: 'success' | 'error' | 'info' | 'warning' | 'danger'
     ) => void
@@ -193,7 +193,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return result.data
             },
             registerEmail: async (email: string, hash: string) => {
-                const { addClientAlert } = get()
+                const { addToast } = get()
                 hash = prepend0x(hash)
                 const result = await middleware(
                     axios.post(
@@ -212,13 +212,13 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message, 'error')
+                    addToast(result.message, 'error')
                     return false
                 }
                 return true
             },
             verifyEmail: async (email: string, hash: string, code: string) => {
-                const { addClientAlert, setEmailToken } = get()
+                const { addToast, setEmailToken } = get()
                 hash = prepend0x(hash)
                 const result = await middleware(
                     axios.post(
@@ -237,7 +237,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                     ),
                 )
                 if (result.error) {
-                    addClientAlert(result.message, 'error')
+                    addToast(result.message, 'error')
                     return false
                 }
                 if (result.data?.token) {
@@ -246,7 +246,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return true
             },
             loginWithEmail: async (email: string, password: string) => {
-                const { addClientAlert, setEmailToken } = get()
+                const { addToast, setEmailToken } = get()
                 password = prepend0x(password)
                 const result = await middleware(
                     axios.post(
@@ -264,7 +264,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                     ),
                 )
                 if (result.error) {
-                    addClientAlert(result.message, 'error')
+                    addToast(result.message, 'error')
                     return false
                 }
                 console.log(result, result.data?.token)
@@ -280,7 +280,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             getUserInfo: async () => {
                 const {
                     getTokenViaLoginMode,
-                    addClientAlert,
+                    addToast,
                     onSignOut,
                 } = get()
                 const token = getTokenViaLoginMode()
@@ -302,7 +302,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                         onSignOut()
                         return
                     }
-                    addClientAlert(
+                    addToast(
                         'Error fetching user info. Please sign in again.',
                     )
                     return
@@ -332,14 +332,14 @@ const useDialSiteStore = create<DialSiteStore>()(
 
                 if (result.data?.alerts) {
                     result.data.alerts.forEach((alert: ServerAlert) => {
-                        get().addClientAlert(alert.content, alert.class)
+                        get().addToast(alert.content, alert.class)
                     })
                 }
             },
             getUserNodes: async (existingTimeout?: NodeJS.Timeout) => {
                 const {
                     getTokenViaLoginMode,
-                    addClientAlert,
+                    addToast,
                     onSignOut,
                 } = get()
                 const token = getTokenViaLoginMode()
@@ -362,7 +362,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                         return
                     }
 
-                    addClientAlert(
+                    addToast(
                         'Error fetching user nodes. Please sign in again if issue persists.',
                     )
                     return
@@ -398,7 +398,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return result.data
             },
             checkProducts: async (locale: string) => {
-                const { addClientAlert } = get()
+                const { addToast } = get()
                 const result = await middleware(
                     axios.get(`/api/products/${locale}`, {
                         headers: {
@@ -411,7 +411,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (shouldReturn) return []
 
                 if (result.error) {
-                    addClientAlert(
+                    addToast(
                         'Error fetching products. Please sign in again if issue persists.',
                     )
                     return []
@@ -419,10 +419,10 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return result.data as ProductSubscription[]
             },
             purchaseProduct: async (fee: { productId: number, periodicity: string, price: number }) => {
-                const { getTokenViaLoginMode, addClientAlert } = get()
+                const { getTokenViaLoginMode, addToast } = get()
                 const token = getTokenViaLoginMode()
                 if (!token) {
-                    addClientAlert('You are not signed in. Please do so in order to perform this action.')
+                    addToast('You are not signed in. Please do so in order to perform this action.')
                     return null
                 }
                 const result = await middleware(
@@ -437,7 +437,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (shouldReturn) return null
 
                 if (result.error || !result.data?.message || !result.data?.subscriptionId) {
-                    addClientAlert(
+                    addToast(
                         'Error fetching products. Please sign in again if issue persists.',
                     )
                     return null
@@ -478,6 +478,9 @@ const useDialSiteStore = create<DialSiteStore>()(
             onSignOut: () => {
                 localStorage.clear()
                 sessionStorage.clear()
+                console.log('onSignOut', window.location.href)
+                window.location.href = '/'
+                console.log('onSignOut2', window.location.href)
             },
             addNodeModalOpen: false,
             setAddNodeModalOpen: (addNodeModalOpen: boolean) => {
@@ -487,7 +490,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             setResetPasswordModalOpen: (resetPasswordModalOpen: boolean) => {
                 set({ resetPasswordModalOpen })
             },
-            addClientAlert: (
+            addToast: (
                 message: string | ServerAlert | ClientAlert,
                 type?: 'success' | 'error' | 'info' | 'warning' | 'danger'
             ) => {
@@ -538,7 +541,7 @@ const useDialSiteStore = create<DialSiteStore>()(
             checkIsNodeAvailable: async (node: string) => {
                 const {
                     getTokenViaLoginMode,
-                    addClientAlert,
+                    addToast,
                     onSignOut,
                 } = get()
                 const token = getTokenViaLoginMode()
@@ -561,10 +564,10 @@ const useDialSiteStore = create<DialSiteStore>()(
 
                 if (result.error) {
                     if (result.loginAgain) {
-                        addClientAlert('Your session has timed out. Please log in.', 'error')
+                        addToast('Your session has timed out. Please log in.', 'error')
                         onSignOut()
                     }
-                    addClientAlert(
+                    addToast(
                         'There was an issue checking the availability of your node. Please ensure node name is valid and that you are properly signed in.',
                         'error'
                     )
@@ -656,7 +659,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 return { success: true, error: false }
             },
             addWhitelistedUser: async (user) => {
-                const { operatorToken, addClientAlert } = get()
+                const { operatorToken, addToast } = get()
                 if (!operatorToken) return false
 
                 const result = await middleware(
@@ -673,13 +676,13 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (shouldReturn) return false;
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to add user', 'error')
+                    addToast(result.message || 'Failed to add user', 'error')
                     return false
                 }
                 return true
             },
             editWhitelistedIdentifier: async (userId, identifier) => {
-                const { operatorToken, addClientAlert } = get()
+                const { operatorToken, addToast } = get()
                 if (!operatorToken) return false
 
                 const result = await middleware(
@@ -697,13 +700,13 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (shouldReturn) return false;
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to update identifier', 'error')
+                    addToast(result.message || 'Failed to update identifier', 'error')
                     return false
                 }
                 return true
             },
             editRemainingKinodes: async (userId, remainingKinodes) => {
-                const { operatorToken, addClientAlert } = get()
+                const { operatorToken, addToast } = get()
                 if (!operatorToken) return false
 
                 const result = await middleware(
@@ -722,13 +725,13 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (shouldReturn) return false;
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to update remaining kinodes', 'error')
+                    addToast(result.message || 'Failed to update remaining kinodes', 'error')
                     return false
                 }
                 return true
             },
             editRemainingTrial: async (userId, remainingTrial) => {
-                const { operatorToken, addClientAlert } = get()
+                const { operatorToken, addToast } = get()
                 if (!operatorToken) return false
 
                 const result = await middleware(
@@ -747,13 +750,13 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (shouldReturn) return false;
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to update trial status', 'error')
+                    addToast(result.message || 'Failed to update trial status', 'error')
                     return false
                 }
                 return true
             },
             deleteWhitelistedUser: async (userId) => {
-                const { operatorToken, addClientAlert } = get()
+                const { operatorToken, addToast } = get()
                 if (!operatorToken) return false
 
                 const result = await middleware(
@@ -770,7 +773,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 if (shouldReturn) return false;
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to delete user', 'error')
+                    addToast(result.message || 'Failed to delete user', 'error')
                     return false
                 }
                 return true
@@ -782,7 +785,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 set({ operatorToken: '' })
             },
             searchActiveUser: async (identifier: string) => {
-                const { operatorToken, addClientAlert } = get()
+                const { operatorToken, addToast } = get()
                 if (!operatorToken) return []
 
                 const result = await middleware(
@@ -796,14 +799,14 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to fetch active users', 'error')
+                    addToast(result.message || 'Failed to fetch active users', 'error')
                     return []
                 }
                 return result.data || []
             },
 
             searchWhitelistedUser: async (identifier: string) => {
-                const { operatorToken, addClientAlert } = get()
+                const { operatorToken, addToast } = get()
                 if (!operatorToken) return []
 
                 const result = await middleware(
@@ -817,14 +820,14 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to fetch whitelisted users', 'error')
+                    addToast(result.message || 'Failed to fetch whitelisted users', 'error')
                     return []
                 }
                 return result.data || []
             },
 
             searchUserById: async (userId: string) => {
-                const { operatorToken, addClientAlert } = get()
+                const { operatorToken, addToast } = get()
                 if (!operatorToken) return null
 
                 const result = await middleware(
@@ -838,7 +841,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 )
 
                 if (result.error) {
-                    addClientAlert(result.message || 'Failed to fetch user by ID', 'error')
+                    addToast(result.message || 'Failed to fetch user by ID', 'error')
                     return null
                 }
                 return result.data

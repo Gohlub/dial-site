@@ -27,7 +27,7 @@ export const SignupBox = () => {
         assignSubscription,
         userNodes,
         userInfo,
-        addClientAlert,
+        addToast,
         getSiweNonce,
         siweNonce,
         loginMode,
@@ -265,12 +265,12 @@ export const SignupBox = () => {
             // console.log({ products })
             const freeTrialProduct = products.find(p => p.title === 'Dial Subscription')
             if (!freeTrialProduct) {
-                addClientAlert('No free trial product found (E#1).')
+                addToast('No free trial product found (E#1).')
                 return
             }
             const freeTrial = freeTrialProduct.price_options.find((p: { amount: number }) => p.amount === 0)
             if (!freeTrial) {
-                addClientAlert('No free trial product found (E#2).')
+                addToast('No free trial product found (E#2).')
                 return
             }
             setInitializationStage('purchase-free-trial')
@@ -282,7 +282,7 @@ export const SignupBox = () => {
             setPendingSubscription(subscription)
         }
         if (!subscription) {
-            addClientAlert('Failed to purchase free trial (E#3).')
+            addToast('Failed to purchase free trial (E#3).')
             setInitializationStage('none')
             return
         }

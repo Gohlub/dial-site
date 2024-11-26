@@ -2,12 +2,12 @@ import useDialSiteStore from '../store/dialSiteStore'
 import { Link } from 'react-router-dom'
 
 export default function NavBar() {
-    const { viteMode, addClientAlert } = useDialSiteStore()
+    const { viteMode, addToast } = useDialSiteStore()
 
     const nukeButton = <button onClick={() => {
         localStorage.clear();
         sessionStorage.clear();
-        addClientAlert('Storage cleared')
+        addToast('Storage cleared')
     }}>Clear storage</button>
 
     return (

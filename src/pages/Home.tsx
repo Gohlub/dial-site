@@ -10,7 +10,7 @@ import StagedLoadingOverlay from '../components/StagedLoadingOverlay'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { useLocation } from 'react-router-dom'
 import { NODE_LOADING_STAGES } from '../types/nodeLoadingStages'
-import { deriveNodePassword, prepend0x, } from '../utilities/auth'
+import { deriveNodePassword, doesNodeHaveDialInstalled, loginToNode, prepend0x, } from '../utilities/auth'
 import 'react-toastify/dist/ReactToastify.css'
 import { LandingPage } from '../components/LandingPage'
 import { getFirstDialNode, UserNode } from '../types/UserNode'
@@ -38,7 +38,8 @@ export const Home = () => {
         expectedAvailabilityDate,
         loadingStage,
         setLoadingStage,
-        addClientAlert,
+        addToast,
+        getNodeDetails,
         hasSeenLanding,
         setHasSeenLanding,
     } = useDialSiteStore()
@@ -69,17 +70,48 @@ export const Home = () => {
         }
     }, [searchParams])
 
+    // [x] If the user has one dial plan node, sign them in to it.
+    // [x] If the user has no nodes, redirect them to the signup page.
+    // [ ] TODO: If the user has multiple dial plan nodes, open the node selection modal.
+    // [x] If the user has one node with dial installed, but no dial plan nodes, sign them in to it.
+    // [ ] TODO: If the user has multiple non-dial-plan nodes with dial installed, open the node selection modal.
     useEffect(() => {
         const handleNodeStatus = async () => {
             console.log('handle node status')
 
             const node = getFirstDialNode(userNodes)
-            if (!node) {
+            if (!node) { // no dial plan nodes
+                if (Object.keys(userNodes).length > 0) {
+                    // user has at least one node, but no dial plan nodes
+                    // check for presence of installed dial
+                    const installedIds: number[] = []
+                    for (const node of Object.values(userNodes)) {
+                        if (await doesNodeHaveDialInstalled(node)) {
+                            installedIds.push(node.id)
+                        }
+                    }
+
+                    if (installedIds.length > 0) {
+                        // user has at least one node with dial installed, but no dial plan nodes
+                        // sign them in to it
+                        // TODO: handle multiple non-plan nodes with dial installed
+                        const thatNode = userNodes[installedIds[0] as any]
+                        const deets = await getNodeDetails(thatNode.id)
+                        thatNode.kinode_password ||= deets?.kinode_password
+                        if (thatNode.kinode_password) {
+                            await loginToNode(thatNode, thatNode.kinode_password)
+                        } else {
+                            addToast('No password found for node. Please contact support.')
+                        }
+                        return
+                    }
+                }
                 setIsInitialNodeCheck(false)
                 setEntryMode('signup')
                 return
             }
 
+            // at this point we have confirmed the presence of a dial plan node
             console.log('user nodes', userNodes)
 
             if (node.ship_type !== 'kinode') {
@@ -100,7 +132,7 @@ export const Home = () => {
                         serviceType
                     );
                 } else {
-                    addClientAlert('No user ID found. Please contact support.')
+                    addToast('No user ID found. Please contact support.')
                     setLoadingStage()
                     return
                 }
@@ -126,11 +158,11 @@ export const Home = () => {
                     console.log('Form submission:', field.name + field.value);
                     form.submit();
                 } else {
-                    addClientAlert('Failed to derive node password', 'error')
+                    addToast('Failed to derive node password', 'error')
                     setLoadingStage()
                 }
             } catch (error) {
-                addClientAlert('Failed to login to node: ' + (error as Error).message)
+                addToast('Failed to login to node: ' + (error as Error).message)
             }
         }
 
@@ -258,12 +290,14 @@ export const Home = () => {
             {userToken && <button
                 onClick={() => {
                     onSignOut()
-                    setUserToken(null)
-                    window.location.reload()
+                    setInterval(() => {
+                        onSignOut()
+                        window.location.reload()
+                    }, 1000)
                 }}
                 className="fixed bottom-4 right-4 text-lg alt z-50"
             >
-                Sign out
+                Back
             </button>}
         </>
     )

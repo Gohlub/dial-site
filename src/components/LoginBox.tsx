@@ -7,7 +7,7 @@ import { OPTIMISM_CHAIN_ID } from '../utilities/eth'
 import { switchToOptimism } from '../utilities/eth'
 import { ethers } from 'ethers'
 import { SiweMessage } from 'siwe'
-import { loginToNode, deriveNodePassword } from '../utilities/auth'
+import { loginToNode, deriveNodePassword, doesNodeHaveDialInstalled } from '../utilities/auth'
 import { NodeSelectionModal } from './NodeSelectionModal'
 import { getFirstDialNode } from '../types/UserNode'
 import ForgotPasswordModal from './ForgotPasswordModal'
@@ -20,7 +20,8 @@ export const LoginBox = () => {
         getSiweNonce,
         registerSiwe,
         setSiweToken,
-        addClientAlert,
+        addToast,
+        getNodeDetails,
         userNodes,
         userInfo,
         setLoadingStage,
@@ -50,10 +51,17 @@ export const LoginBox = () => {
                         if (node?.kinode_password) {
                             await loginToNode(node, node.kinode_password)
                         } else {
-                            addClientAlert('No password found for node. Please contact support.')
+                            const thatNode = userNodes[Object.keys(userNodes)[0] as any]
+                            const deets = await getNodeDetails(thatNode.id);
+                            thatNode.kinode_password ||= deets?.kinode_password
+                            if (thatNode.kinode_password) {
+                                await loginToNode(thatNode, thatNode.kinode_password)
+                            } else {
+                                addToast('No password found for node. Please contact support.')
+                            }
                         }
                     } catch (error) {
-                        addClientAlert('Failed to login to node: ' + (error as Error).message)
+                        addToast('Failed to login to node: ' + (error as Error).message)
                     }
                 } else {
                     setNodeSelectionOpen(true)
@@ -73,7 +81,7 @@ export const LoginBox = () => {
         try {
             console.log('checking ethereum')
             if (!(window as any).ethereum) {
-                addClientAlert('Please install MetaMask or another Ethereum wallet')
+                addToast('Please install MetaMask or another Ethereum wallet')
                 return
             }
 
@@ -110,13 +118,13 @@ export const LoginBox = () => {
 
             const reginResult = await registerSiwe(messageToSign, signature)
             if (!reginResult?.jwt) {
-                addClientAlert('Failed to sign in with Ethereum. Please try again.')
+                addToast('Failed to sign in with Ethereum. Please try again.')
                 return
             }
 
             setSiweToken(reginResult.jwt)
             if (!userInfo?.id) {
-                addClientAlert('No user ID found. Please contact support.')
+                addToast('No user ID found. Please contact support.')
                 return
             }
 
@@ -128,20 +136,25 @@ export const LoginBox = () => {
 
                 if (Object.keys(userNodes).length === 1) {
                     const node = getFirstDialNode(userNodes)
-                    if (node?.kinode_password) {
+                    if (node) {
                         await loginToNode(node, node.kinode_password || derivedPassword)
+                    } else if ((await doesNodeHaveDialInstalled(userNodes[Object.keys(userNodes)[0] as any]))) {
+                        const thatNode = userNodes[Object.keys(userNodes)[0] as any]
+                        const deets = await getNodeDetails(thatNode.id);
+                        thatNode.kinode_password ||= deets?.kinode_password
+                        await loginToNode(thatNode, thatNode.kinode_password || derivedPassword)
                     } else {
-                        addClientAlert('No password found for node. Please contact support.')
+                        addToast('No password found for node. Please contact support.')
                     }
                 } else {
                     setNodeSelectionOpen(true)
                 }
             } catch (error) {
-                addClientAlert('Failed to login to node: ' + (error as Error).message)
+                addToast('Failed to login to node: ' + (error as Error).message)
             }
         } catch (error) {
             console.error(error)
-            addClientAlert('Failed to sign in with Ethereum: ' + (error as Error).message)
+            addToast('Failed to sign in with Ethereum: ' + (error as Error).message)
         }
     }
 

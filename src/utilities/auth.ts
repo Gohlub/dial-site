@@ -35,13 +35,13 @@ export async function deriveNodePassword(
 }
 
 export const loginToNode = async (node: UserNode, passwordHash: string) => {
-    const { addClientAlert, setLoadingStage, getTokenViaLoginMode } = useDialSiteStore.getState()
+    const { addToast, setLoadingStage, getTokenViaLoginMode } = useDialSiteStore.getState()
     const dialToken = getTokenViaLoginMode()
     passwordHash = prepend0x(passwordHash)
 
     if (node.ship_status !== 'active') {
         const errorMsg = `Cannot login: node status is ${node.ship_status}`
-        addClientAlert(errorMsg)
+        addToast(errorMsg)
         setLoadingStage()
         throw new Error(errorMsg)
     }
@@ -99,21 +99,31 @@ export const loginToNode = async (node: UserNode, passwordHash: string) => {
             } catch (error) {
                 console.error('Navigation failed:', error);
                 setLoadingStage()
-                addClientAlert('Failed to access node');
+                addToast('Failed to access node');
                 throw error;
             }
         }
     } catch (error) {
         console.error('Failed to login to node:', error);
         setLoadingStage()
-        addClientAlert(`Failed to login to node: ${(error as Error).message}`)
+        addToast(`Failed to login to node: ${(error as Error).message}`)
         throw error;
     }
 };
 
 export const prepend0x = (hash: string) => {
-    if (!hash) {
+    if (!hash || hash === '') {
         throw new Error('Hash is required')
     }
     return hash.startsWith('0x') ? hash : `0x${hash}`
+}
+
+export const doesNodeHaveDialInstalled = async (node: UserNode) => {
+    const password = prepend0x(node.kinode_password || '')
+    const response = await fetch(`${node.link}/curator:dial:uncentered.os`, {
+        headers: {
+            Authorization: `Bearer ${password}`
+        }
+    })
+    return response.ok
 }

@@ -6,7 +6,7 @@ import NavBar from '../components/NavBar'
 export const ProcessXToken = () => {
     const location = useLocation()
     const nav = useNavigate()
-    const { addClientAlert } = useDialSiteStore()
+    const { addToast } = useDialSiteStore()
     const searchParams = new URLSearchParams(location.search)
     const token = searchParams.get('token')
 
@@ -16,7 +16,7 @@ export const ProcessXToken = () => {
         if (token) {
             nav(`/?x=${token}`)
         } else {
-            addClientAlert('Something went wrong. Please try again.', 'error')
+            addToast('Something went wrong. Please try again.', 'error')
         }
     }, [token])
 
