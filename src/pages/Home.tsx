@@ -101,6 +101,7 @@ export const Home = () => {
                         const deets = await getNodeDetails(thatNode.id)
                         thatNode.kinode_password ||= deets?.kinode_password
                         if (thatNode.kinode_password) {
+                            setLoadingStage('kinode')
                             await loginToNode(thatNode, thatNode.kinode_password)
                         } else {
                             addToast('No password found for node. Please contact support.')
