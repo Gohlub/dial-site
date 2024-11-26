@@ -119,11 +119,20 @@ export const prepend0x = (hash: string) => {
 }
 
 export const doesNodeHaveDialInstalled = async (node: UserNode) => {
+    if (!node.kinode_password) {
+        const nodeDetails = await useDialSiteStore.getState().getNodeDetails(node.id)
+        node.kinode_password = nodeDetails?.kinode_password
+    }
     const password = prepend0x(node.kinode_password || '')
-    const response = await fetch(`${node.link}/curator:dial:uncentered.os`, {
+    const response = await fetch(`/api/dial-installed`, {
+        method: 'POST',
         headers: {
-            Authorization: `Bearer ${password}`
-        }
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            token: password,
+            nodeUrl: node.link
+        })
     })
-    return response.ok
+    return response.status === 200
 }

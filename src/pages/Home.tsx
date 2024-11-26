@@ -83,6 +83,7 @@ export const Home = () => {
             if (!node) { // no dial plan nodes
                 if (Object.keys(userNodes).length > 0) {
                     // user has at least one node, but no dial plan nodes
+                    console.log('user has at least one node, but no dial plan nodes')
                     // check for presence of installed dial
                     const installedIds: number[] = []
                     for (const node of Object.values(userNodes)) {
@@ -93,6 +94,7 @@ export const Home = () => {
 
                     if (installedIds.length > 0) {
                         // user has at least one node with dial installed, but no dial plan nodes
+                        console.log('user has at least one node with dial installed, but no dial plan nodes')
                         // sign them in to it
                         // TODO: handle multiple non-plan nodes with dial installed
                         const thatNode = userNodes[installedIds[0] as any]
