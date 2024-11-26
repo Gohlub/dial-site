@@ -292,10 +292,17 @@ export const Home = () => {
             )}
             {userToken && <button
                 onClick={() => {
+                    // Clear all state immediately
                     onSignOut()
-                    setInterval(() => {
-                        onSignOut()
-                        window.location.reload()
+
+                    // Force a clean navigation to root
+                    window.location.replace('/signout')
+
+                    // if navigation doesn't occur, reload
+                    setTimeout(() => {
+                        if (window.location.pathname !== '/') {
+                            window.location.reload()
+                        }
                     }, 1000)
                 }}
                 className="fixed bottom-4 right-4 text-lg alt z-50"

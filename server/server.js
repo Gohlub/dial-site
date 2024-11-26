@@ -57,14 +57,19 @@ app.get('/api/sanity-check', (req, res) => {
 
 app.post('/api/dial-installed', async (req, res) => {
     const { token, nodeUrl } = req.body
-    const response = await axios({
-        method: 'GET',
-        url: `${nodeUrl}/curator:dial:uncentered.os`,
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    })
-    res.sendStatus(response.status)
+    try {
+        const response = await axios({
+            method: 'GET',
+            url: `${nodeUrl}/curator:dial:uncentered.os`,
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        res.sendStatus(response.status)
+    } catch (error) {
+        console.error('Error checking dial installed:', error)
+        res.status(500).send('Failed to check dial installed')
+    }
 })
 
 // Add new endpoint to proxy node login requests
