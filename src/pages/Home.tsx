@@ -51,6 +51,7 @@ export const Home = () => {
     const [userToken, setUserToken] = useState<string | null>(null)
     const [_ourDialNode, setOurDialNode] = useState<UserNode | null>(null)
     const [isInitialNodeCheck, setIsInitialNodeCheck] = useState(true)
+    const [isLoggingIn, setIsLoggingIn] = useState(false)
 
     useEffect(() => {
         const token = getTokenViaLoginMode()
@@ -77,6 +78,10 @@ export const Home = () => {
     // [ ] TODO: If the user has multiple non-dial-plan nodes with dial installed, open the node selection modal.
     useEffect(() => {
         const handleNodeStatus = async () => {
+            if (!userToken || isLoggingIn) {
+                return
+            }
+
             console.log('handle node status')
 
             const node = getFirstDialNode(userNodes)
@@ -102,7 +107,11 @@ export const Home = () => {
                         thatNode.kinode_password ||= deets?.kinode_password
                         if (thatNode.kinode_password) {
                             setLoadingStage('kinode')
-                            await loginToNode(thatNode, thatNode.kinode_password)
+                            setIsInitialNodeCheck(true)
+                            setIsLoggingIn(true)
+                            await loginToNode(thatNode, thatNode.kinode_password, userToken).finally(() => {
+                                setIsLoggingIn(false)
+                            })
                         } else {
                             addToast('No password found for node. Please contact support.')
                         }
@@ -142,24 +151,10 @@ export const Home = () => {
                 console.log('password', password)
 
                 if (password) {
-                    password = prepend0x(password)
-
-                    const nodeUrl = node.link.replace('http://', 'https://');
-
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = `${nodeUrl}/login?redirect=${encodeURIComponent(`/curator:dial:uncentered.os?dialToken=${userToken}`)}`;
-                    form.enctype = 'text/plain';
-
-                    const field = document.createElement('input');
-                    field.type = 'hidden';
-                    field.name = '{"password_hash":"' + password + '","subdomain":"", "';
-                    field.value = '": "" }';
-                    form.appendChild(field);
-
-                    document.body.appendChild(form);
-                    console.log('Form submission:', field.name + field.value);
-                    form.submit();
+                    setIsLoggingIn(true)
+                    await loginToNode(node, password, userToken).finally(() => {
+                        setIsLoggingIn(false)
+                    })
                 } else {
                     addToast('Failed to derive node password', 'error')
                     setLoadingStage()

@@ -72,46 +72,6 @@ app.post('/api/dial-installed', async (req, res) => {
     }
 })
 
-// Add new endpoint to proxy node login requests
-app.post('/api/node-login', async (req, res) => {
-    const { nodeUrl, passwordHash, subdomain, redirect } = req.body
-
-    try {
-        const response = await axios({
-            method: 'POST',
-            url: `${nodeUrl}/login`,
-            params: { redirect },
-            data: {
-                password_hash: passwordHash,
-                subdomain,
-            },
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            maxRedirects: 0,
-            validateStatus: (status) => status >= 200 && status < 400
-        })
-
-        // Parse the target domain from nodeUrl
-        const targetDomain = new URL(nodeUrl).hostname;
-
-        // Forward ALL headers from the node's response
-        Object.entries(response.headers).forEach(([key, value]) => {
-            res.setHeader(key, value);
-        });
-
-        res.json({
-            redirectUrl: response.headers.location,
-            success: true,
-            headers: response.headers,
-            status: response.status
-        });
-    } catch (error) {
-        console.error('Error proxying node login:', error)
-        res.status(500).send('Failed to login to node')
-    }
-})
-
 // Load environment variable
 const NODE_PASSWORD_SECRET = process.env.NODE_PASSWORD_SECRET;
 if (!NODE_PASSWORD_SECRET) {

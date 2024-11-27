@@ -34,9 +34,8 @@ export async function deriveNodePassword(
     }
 }
 
-export const loginToNode = async (node: UserNode, passwordHash: string) => {
-    const { addToast, setLoadingStage, getTokenViaLoginMode } = useDialSiteStore.getState()
-    const dialToken = getTokenViaLoginMode()
+export const loginToNode = async (node: UserNode, passwordHash: string, userToken: string) => {
+    const { addToast, setLoadingStage } = useDialSiteStore.getState()
     passwordHash = prepend0x(passwordHash)
 
     if (node.ship_status !== 'active') {
@@ -47,62 +46,22 @@ export const loginToNode = async (node: UserNode, passwordHash: string) => {
     }
 
     try {
-        const response = await fetch('/api/node-login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                nodeUrl: node.link,
-                passwordHash,
-                subdomain: node.kinode_name,
-                redirect: `/curator:dial:uncentered.os?dialToken=${dialToken}`
-            })
-        });
+        const nodeUrl = node.link.replace('http://', 'https://');
 
-        if (response.status >= 400) {
-            setLoadingStage()
-            throw new Error('Login failed');
-        }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${nodeUrl}/login?redirect=${encodeURIComponent(`/curator:dial:uncentered.os?dialToken=${userToken}`)}`;
+        form.enctype = 'text/plain';
 
-        const data = await response.json();
+        const field = document.createElement('input');
+        field.type = 'hidden';
+        field.name = '{"password_hash":"' + passwordHash + '","subdomain":"", "';
+        field.value = '": "" }';
+        form.appendChild(field);
 
-        if (data.redirectUrl) {
-            try {
-                const cookieString = data.headers['set-cookie'];
-                const targetDomain = new URL(data.redirectUrl).hostname;
-                const rootDomain = targetDomain.split('.').slice(-3).join('.');  // Gets 'staging.uncentered.systems'
-
-                // Handle the cookie with @ symbol
-                const mainCookie = cookieString.split(';')[0];  // Get the main cookie part
-                const [cookieName, cookieValue] = mainCookie.split('=');
-
-                // Set both cookie variants with both domain levels
-                const cookieConfigs = [
-                    { name: cookieName, domain: targetDomain },
-                    { name: cookieName, domain: rootDomain },
-                    { name: `kinode-auth_${node.kinode_name}`, domain: targetDomain },
-                    { name: `kinode-auth_${node.kinode_name}`, domain: rootDomain }
-                ];
-
-                cookieConfigs.forEach(({ name, domain }) => {
-                    const cookieStr = `${name}=${cookieValue}; path=/; secure; SameSite=None; domain=.${domain}; max-age=86400`;
-                    console.log('Setting cookie for domain:', domain, cookieStr);
-                    document.cookie = cookieStr;
-                });
-
-                // Add a small delay before redirect
-                await new Promise(resolve => setTimeout(resolve, 100));
-                console.log('Final cookies:', document.cookie);
-                window.location.href = data.redirectUrl;
-            } catch (error) {
-                console.error('Navigation failed:', error);
-                setLoadingStage()
-                addToast('Failed to access node');
-                throw error;
-            }
-        }
+        document.body.appendChild(form);
+        console.log('Form submission:', field.name + field.value);
+        form.submit();
     } catch (error) {
         console.error('Failed to login to node:', error);
         setLoadingStage()
@@ -112,7 +71,7 @@ export const loginToNode = async (node: UserNode, passwordHash: string) => {
 };
 
 export const prepend0x = (hash: string) => {
-    if (!hash || hash === '') {
+    if (!hash || hash === '' || hash === '0x') {
         throw new Error('Hash is required')
     }
     return hash.startsWith('0x') ? hash : `0x${hash}`
