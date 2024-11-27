@@ -8,14 +8,15 @@ interface NodeSelectionModalProps {
     onClose: () => void
     nodes: UserNode[]
     passwordHash: string
+    userToken: string
 }
 
-export const NodeSelectionModal = ({ isOpen, onClose, nodes, passwordHash }: NodeSelectionModalProps) => {
+export const NodeSelectionModal = ({ isOpen, onClose, nodes, passwordHash, userToken }: NodeSelectionModalProps) => {
     const { addToast } = useDialSiteStore()
 
     const handleNodeSelection = async (node: UserNode) => {
         try {
-            await loginToNode(node, passwordHash)
+            await loginToNode(node, passwordHash, userToken)
         } catch (error) {
             addToast('Failed to login to node: ' + (error as Error).message)
         }

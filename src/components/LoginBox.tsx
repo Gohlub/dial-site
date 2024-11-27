@@ -25,6 +25,7 @@ export const LoginBox = () => {
         userNodes,
         userInfo,
         setLoadingStage,
+        getTokenViaLoginMode,
     } = useDialSiteStore()
 
     const [loginEmail, setLoginEmail] = useState('')
@@ -49,13 +50,13 @@ export const LoginBox = () => {
                     try {
                         const node = getFirstDialNode(userNodes)
                         if (node?.kinode_password) {
-                            await loginToNode(node, node.kinode_password)
+                            await loginToNode(node, node.kinode_password, getTokenViaLoginMode()!)
                         } else {
                             const thatNode = userNodes[Object.keys(userNodes)[0] as any]
                             const deets = await getNodeDetails(thatNode.id);
                             thatNode.kinode_password ||= deets?.kinode_password
                             if (thatNode.kinode_password) {
-                                await loginToNode(thatNode, thatNode.kinode_password)
+                                await loginToNode(thatNode, thatNode.kinode_password, getTokenViaLoginMode()!)
                             } else {
                                 addToast('No password found for node. Please contact support.')
                             }
@@ -137,12 +138,12 @@ export const LoginBox = () => {
                 if (Object.keys(userNodes).length === 1) {
                     const node = getFirstDialNode(userNodes)
                     if (node) {
-                        await loginToNode(node, node.kinode_password || derivedPassword)
+                        await loginToNode(node, node.kinode_password || derivedPassword, getTokenViaLoginMode()!)
                     } else if ((await doesNodeHaveDialInstalled(userNodes[Object.keys(userNodes)[0] as any]))) {
                         const thatNode = userNodes[Object.keys(userNodes)[0] as any]
                         const deets = await getNodeDetails(thatNode.id);
                         thatNode.kinode_password ||= deets?.kinode_password
-                        await loginToNode(thatNode, thatNode.kinode_password || derivedPassword)
+                        await loginToNode(thatNode, thatNode.kinode_password || derivedPassword, getTokenViaLoginMode()!)
                     } else {
                         addToast('No password found for node. Please contact support.')
                     }
@@ -216,12 +217,13 @@ export const LoginBox = () => {
                 isOpen={forgotPasswordOpen}
                 onClose={() => setForgotPasswordOpen(false)}
             />
-            <NodeSelectionModal
+            {getTokenViaLoginMode() && <NodeSelectionModal
                 isOpen={nodeSelectionOpen}
                 onClose={() => setNodeSelectionOpen(false)}
                 nodes={Object.values(userNodes)}
                 passwordHash={loginPasswordHash}
-            />
+                userToken={getTokenViaLoginMode()!}
+            />}
         </>
     )
 }
