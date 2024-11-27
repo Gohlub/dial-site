@@ -8,8 +8,8 @@ Although Dial is a decentralized app built on top of [Kinode](https://github.com
 
 -   Sign in
     -   [x] Email/Password
-    -   [ ] Twitter
-    -   [ ] SIWE
+    -   [x] Twitter
+    -   [x] SIWE
 
 ## Setup
 
