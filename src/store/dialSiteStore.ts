@@ -479,7 +479,7 @@ const useDialSiteStore = create<DialSiteStore>()(
                 localStorage.clear()
                 sessionStorage.clear()
                 console.log('onSignOut', window.location.href)
-                window.location.href = '/'
+                window.location.href = '/auth'
                 console.log('onSignOut2', window.location.href)
             },
             addNodeModalOpen: false,

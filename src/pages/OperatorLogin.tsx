@@ -86,7 +86,7 @@ const OperatorLogin = () => {
                         Sign in
                     </button>
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate('/auth')}
                         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                     >
                         Back

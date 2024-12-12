@@ -13,7 +13,7 @@ const NotWhitelisted = () => {
         const result = await submitContactRequest(name, email, msg)
         if (result.success) {
             addToast('Your message has been sent. We will get back to you soon.', 'success')
-            navigate('/')
+            navigate('/auth')
         } else {
             addToast(result.error as string, 'error')
         }
@@ -50,7 +50,7 @@ const NotWhitelisted = () => {
                     />
                 </div>
                 <button onClick={onSubmit}>Submit</button>
-                <button onClick={() => navigate('/')} className="clear">
+                <button onClick={() => navigate('/auth')} className="clear">
                     Cancel
                 </button>
             </div>

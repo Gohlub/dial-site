@@ -109,6 +109,10 @@ button[type='submit'],
     @apply border-black/25 hover:border-white/25;
 }
 
+.icon.thin {
+    @apply px-0 py-2 border-none;
+}
+
 body {
     @apply text-black;
     background-color: #fffcf5;

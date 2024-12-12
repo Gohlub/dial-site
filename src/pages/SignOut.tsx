@@ -8,7 +8,7 @@ export function SignOut() {
 
     useEffect(() => {
         onSignOut();
-        navigate('/');
+        navigate('/auth');
     }, [navigate]);
 
     return null;

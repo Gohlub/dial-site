@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { Home } from './pages/Home'
+import { UserAuth } from './pages/UserAuth'
 import { ProcessXToken } from './pages/ProcessXToken'
 import NotWhitelisted from './pages/NotWhitelisted'
 import ContactUs from './pages/ContactUs'
@@ -10,6 +10,7 @@ import OperatorLogin from './pages/OperatorLogin'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { SignOut } from './pages/SignOut'
+import { Home } from './pages/Home'
 
 function App() {
     return (
@@ -17,6 +18,7 @@ function App() {
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/auth" element={<UserAuth />} />
                     <Route path="/x-callback" element={<ProcessXToken />} />
                     <Route
                         path="/not-whitelisted"

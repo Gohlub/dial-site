@@ -1,7 +1,10 @@
 import useDialSiteStore from '../store/dialSiteStore'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { FaHubspot } from 'react-icons/fa'
 
 export default function NavBar() {
+    const navigate = useNavigate()
     const { viteMode, addToast } = useDialSiteStore()
 
     const nukeButton = <button onClick={() => {
@@ -14,13 +17,47 @@ export default function NavBar() {
         <div className="flex items-center gap-4 p-4 self-stretch bg-white shadow-xl z-60">
             <Link
                 to="/"
-                className="px-4 py-2 decoration-none hover:underline hover:opacity-70 font-normal"
+                className="decoration-none hover:underline hover:opacity-70 font-normal"
             >
-                <img src="/DIAL.svg" className="h-12" />
+                <img src="/DIAL.svg" className="h-8" />
             </Link>
-            <Link to="https://uncentered.systems" className="ml-auto px-4 py-2 bg-orange rounded-lg shadow-sm">
-                <img src="/White Wordmark.svg" className="h-8" />
+            <span className="self-stretch bg-orange w-[1px]"></span>
+            <Link to="https://uncentered.systems" className="">
+                <img src="/Orange Wordmark.svg" className="h-8" />
             </Link>
+
+            <span className="flex-1">
+                {/* JE SUIS LE GROS SPAN! NE PAS TOUCHER! */}
+            </span>
+
+            <motion.button
+                onClick={() => navigate('/')}
+                className="px-6 py-2 text-lg font-medium text-orange border-2 border-orange rounded-full
+                    hover:bg-gradient-to-r hover:from-orange hover:to-black
+                    hover:text-white transition-all duration-30
+                    shadow-md hover:shadow-lg
+                    bg-black/80
+                    transform hover:scale-105
+                    flex items-center gap-2"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+            >
+                <FaHubspot className="text-xl" />
+                Holoscope
+            </motion.button>
+
+            <button
+                className="alt text-lg"
+                onClick={() => navigate('/auth')}
+            >
+                Sign up
+            </button>
+            <button
+                onClick={() => navigate('/auth')}
+                className="text-lg"
+            >
+                Log in
+            </button>
             {viteMode === 'production' ? (
                 <></>
             ) : viteMode === 'staging' ? (

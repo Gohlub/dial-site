@@ -26,10 +26,10 @@ export default function Modal({
         <div className="fixed backdrop-blur-sm inset-0 bg-white bg-opacity-20 flex items-center justify-center z-50">
             <div className={`bg-white rounded-lg p-6 w-full shadow-lg ${maxWidthClasses[maxWidth]}`}>
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">{title}</h2>
+                    <h2 className="text-2xl font-bold">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="icon thin"
                     >
                         <span className="sr-only">Close</span>
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
