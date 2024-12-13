@@ -203,7 +203,7 @@ export const UserAuth = () => {
                             className={classNames('shadow-lg rounded-full p-4 bg-white flex justify-center items-center h-16 min-h-16 w-16 min-w-16')}
                         />
                         <div className="md:text-xl text-center">
-                            Read and curate the best content from anywhere.
+                            Curate the web's best content.
                         </div>
                     </div>
                     <div className="flex flex-col items-center self-stretch grow bg-white p-8 rounded-b-3xl gap-8 items-stretch">
