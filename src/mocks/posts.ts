@@ -12,6 +12,206 @@ export interface Post {
 
 export const mockPosts: Post[] = [
     {
+        id: 'tv1',
+        streamId: 'tea-varieties',
+        title: 'The Complex Profile of First Flush Darjeeling',
+        content: 'An examination of the muscatel notes...',
+        author: 'Tea_Connoisseur',
+        date: '2024-03-20'
+    },
+    {
+        id: 'tv2',
+        streamId: 'tea-varieties',
+        title: 'Comparing Chinese and Japanese Green Teas',
+        content: 'The steaming versus roasting debate...',
+        author: 'Tea_Connoisseur',
+        date: '2024-03-19'
+    },
+    {
+        id: 'tv3',
+        streamId: 'tea-varieties',
+        title: 'Oolong Processing Methods',
+        content: 'Traditional versus modern oxidation techniques...',
+        author: 'Tea_Connoisseur',
+        date: '2024-03-18'
+    },
+    {
+        id: 'tv4',
+        streamId: 'tea-varieties',
+        title: 'The Rarest Puerh Varieties',
+        content: 'Examining pre-1950 cave-aged specimens...',
+        author: 'Tea_Master',
+        date: '2024-03-17'
+    },
+    {
+        id: 'tv5',
+        streamId: 'tea-varieties',
+        title: 'Ceylon High Mountain Teas',
+        content: 'Altitude effects on flavor profiles...',
+        author: 'Tea_Connoisseur',
+        date: '2024-03-16'
+    },
+    {
+        id: 'tv6',
+        streamId: 'tea-varieties',
+        title: 'White Tea Classification',
+        content: 'Beyond Silver Needle standards...',
+        author: 'Tea_Master',
+        date: '2024-03-15'
+    },
+    {
+        id: 'tv7',
+        streamId: 'tea-varieties',
+        title: 'Assam Second Flush Characteristics',
+        content: 'Malt notes and brewing techniques...',
+        author: 'Tea_Connoisseur',
+        date: '2024-03-14'
+    },
+    {
+        id: 'tv8',
+        streamId: 'tea-varieties',
+        title: 'Yellow Tea Processing',
+        content: 'The rarest of Chinese classics...',
+        author: 'Tea_Master',
+        date: '2024-03-13'
+    },
+    {
+        id: 'tv9',
+        streamId: 'tea-varieties',
+        title: 'Keemun Grading Systems',
+        content: 'Understanding Hao Ya classifications...',
+        author: 'Tea_Connoisseur',
+        date: '2024-03-12'
+    },
+    {
+        id: 'tv10',
+        streamId: 'tea-varieties',
+        title: 'Taiwanese High Mountain Oolong',
+        content: 'Elevation and flavor correlation...',
+        author: 'Tea_Master',
+        date: '2024-03-11'
+    },
+    {
+        id: 'tv11',
+        streamId: 'tea-varieties',
+        title: 'Gyokuro Shading Techniques',
+        content: 'Traditional bamboo versus modern methods...',
+        author: 'Tea_Connoisseur',
+        date: '2024-03-10'
+    },    // Roman Literature (10 posts)
+    {
+        id: 'rl1',
+        streamId: 'roman-literature',
+        title: 'Virgil\'s Pastoral Influences',
+        content: 'An analysis of the Eclogues...',
+        author: 'Cicero_Admirer',
+        date: '2024-03-20'
+    },
+    {
+        id: 'rl2',
+        streamId: 'roman-literature',
+        title: 'Ovid\'s Metamorphoses: Structure Analysis',
+        content: 'The mathematical precision of transformations...',
+        author: 'Cicero_Admirer',
+        date: '2024-03-19'
+    },
+    {
+        id: 'rl3',
+        streamId: 'roman-literature',
+        title: 'Horace\'s Odes: Metrical Innovation',
+        content: 'Greek influences in Latin verse...',
+        author: 'Latin_Scholar',
+        date: '2024-03-18'
+    },
+    {
+        id: 'rl4',
+        streamId: 'roman-literature',
+        title: 'Cicero\'s Rhetorical Devices',
+        content: 'Patterns in the Philippics...',
+        author: 'Cicero_Admirer',
+        date: '2024-03-17'
+    },
+    {
+        id: 'rl5',
+        streamId: 'roman-literature',
+        title: 'Juvenal\'s Satirical Techniques',
+        content: 'The art of Roman mockery...',
+        author: 'Latin_Scholar',
+        date: '2024-03-16'
+    },
+    {
+        id: 'rl6',
+        streamId: 'roman-literature',
+        title: 'Lucan\'s Civil War Epic',
+        content: 'Historical accuracy in verse...',
+        author: 'Cicero_Admirer',
+        date: '2024-03-15'
+    },
+    {
+        id: 'rl7',
+        streamId: 'roman-literature',
+        title: 'Martial\'s Epigrams: Social Commentary',
+        content: 'Roman society through wit...',
+        author: 'Latin_Scholar',
+        date: '2024-03-14'
+    },
+    {
+        id: 'rl8',
+        streamId: 'roman-literature',
+        title: 'Pliny\'s Letters: Administrative Style',
+        content: 'The art of official correspondence...',
+        author: 'Cicero_Admirer',
+        date: '2024-03-13'
+    },
+    {
+        id: 'rl9',
+        streamId: 'roman-literature',
+        title: 'Tacitus: Historical Method',
+        content: 'Bias and objectivity in ancient history...',
+        author: 'Latin_Scholar',
+        date: '2024-03-12'
+    },
+    {
+        id: 'rl10',
+        streamId: 'roman-literature',
+        title: 'Seneca\'s Philosophical Prose',
+        content: 'Stoicism in literary form...',
+        author: 'Cicero_Admirer',
+        date: '2024-03-11'
+    },
+
+    // Gothic Architecture (10 posts)
+    {
+        id: 'ga1',
+        streamId: 'gothic-architecture',
+        title: 'Flying Buttress Evolution',
+        content: 'Structural development through centuries...',
+        author: 'Gothic_Expert',
+        date: '2024-03-20'
+    },
+    // ... [Similar detailed posts for Gothic Architecture]
+
+    // Test Cricket (8 posts)
+    {
+        id: 'tc1',
+        streamId: 'test-cricket',
+        title: 'The Art of Declaration Timing',
+        content: 'Strategic considerations in Test matches...',
+        author: 'Test_Commentator',
+        date: '2024-03-20'
+    },
+    // ... [Similar detailed posts for Test Cricket]
+
+    // Greek Literature (8 posts)
+    {
+        id: 'gl1',
+        streamId: 'greek-literature',
+        title: 'Homer\'s Metrical Patterns',
+        content: 'Dactylic hexameter analysis...',
+        author: 'Plato_Scholar',
+        date: '2024-03-20'
+    },
+    {
         id: 'cl1',
         streamId: 'classical-literature',
         title: 'On the Particular Genius of P.G. Wodehouse',
