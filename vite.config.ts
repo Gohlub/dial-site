@@ -30,6 +30,11 @@ export default defineConfig({
                 target: 'http://localhost:8082',
                 changeOrigin: true,
             },
+            '/holoscope': {
+                target: 'https://secretary.hosting.uncentered.systems',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/holoscope/, '')
+            }
         },
     },
     build: {
